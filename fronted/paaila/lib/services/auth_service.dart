@@ -6,7 +6,7 @@ import '../models/auth_response_models.dart';
 
 class AuthService {
   static const String baseUrl =
-      'http://192.168.1.164:3000/api/v1'; // Update with your API URL
+      'http://192.168.1.72:3000/api/v1'; // Update with your API URL
   static String? _authToken;
 
   // Get stored auth token
