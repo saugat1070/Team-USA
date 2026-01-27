@@ -151,13 +151,13 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen>
     }
   }
 
-  @override
-  void dispose() {
-    _footstepController.dispose();
-    _logoController.dispose();
-    _backgroundController.dispose();
-    super.dispose();
-  }
+  //@override
+  //void dispose() {
+  //  _footstepController.dispose();
+  //  _logoController.dispose();
+  //  _backgroundController.dispose();
+  //  super.dispose();
+  //}
 
   @override
   Widget build(BuildContext context) {

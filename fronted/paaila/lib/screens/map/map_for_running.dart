@@ -10,7 +10,6 @@ import '../../models/run.dart';
 import '../../providers/location_provider.dart';
 import '../../repositories/run_repository.dart';
 import '../../providers/socket_provider.dart';
-import '../../providers/auth_provider.dart';
 
 class MapForRunningPage extends ConsumerStatefulWidget {
   const MapForRunningPage({super.key});
@@ -168,8 +167,17 @@ class _MapForRunningPageState extends ConsumerState<MapForRunningPage> {
   /// Handle live location updates
   void _handleNewPosition(Position position) {
     final newPoint = LatLng(position.latitude, position.longitude);
-    print('New Position: ${position.latitude}, ${position.longitude}');
 
+    // Send every new position to the server (continuous stream)
+    final socketService = ref.read(socketServiceProvider);
+    if (_routePoints.isEmpty) {
+      socketService.sendLocation(position.latitude, position.longitude); // walk:start with first point
+    } else {
+      print("Location sent: ${position.latitude}, ${position.longitude}");
+      socketService.sendLocationUpdate(position.latitude, position.longitude); // walk:location stream
+    }
+
+    
 
     if (_routePoints.isEmpty) {
       /// First point: lock as initial position and add a marker
@@ -330,6 +338,9 @@ class _MapForRunningPageState extends ConsumerState<MapForRunningPage> {
         _lastRunPace = 0.0;
       }
     });
+
+    // Notify server that the run has ended
+    ref.read(socketServiceProvider).stopRun();
 
     // Persist this run so it can be shown later on the map / in history.
     if (startedAt != null && _routePoints.isNotEmpty) {

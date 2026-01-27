@@ -24,14 +24,14 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     _passwordController = TextEditingController();
   }
 
-  @override
-  void dispose() {
-    _firstNameController.dispose();
-    _lastNameController.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
+  //@override
+  //void dispose() {
+  //  _firstNameController.dispose();
+  //  _lastNameController.dispose();
+  //  _emailController.dispose();
+  //  _passwordController.dispose();
+  //  super.dispose();
+  //}
 
   void _handleSignUp() async {
     final firstName = _firstNameController.text.trim();
