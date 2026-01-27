@@ -1,70 +1,48 @@
 import 'user_model.dart';
 
 class LoginResponse {
-  final bool success;
   final String message;
-  final String? token;
-  final User? user;
+  final String token;
 
-  LoginResponse({
-    required this.success,
-    required this.message,
-    this.token,
-    this.user,
-  });
+  LoginResponse({required this.message, required this.token});
 
   // Convert JSON to LoginResponse
   factory LoginResponse.fromJson(Map<String, dynamic> json) {
     return LoginResponse(
-      success: json['success'] as bool,
       message: json['message'] as String,
-      token: json['token'] as String?,
-      user: json['user'] != null ? User.fromJson(json['user']) : null,
+      token: json['token'] as String,
     );
   }
 
   // Convert to JSON
   Map<String, dynamic> toJson() {
-    return {
-      'success': success,
-      'message': message,
-      'token': token,
-      'user': user?.toJson(),
-    };
+    return {'message': message, 'token': token};
   }
 }
 
 class SignUpResponse {
-  final bool success;
   final String message;
-  final String? token;
-  final User? user;
+  final String token;
+  final User user;
 
   SignUpResponse({
-    required this.success,
     required this.message,
-    this.token,
-    this.user,
+    required this.token,
+    required this.user,
   });
 
   // Convert JSON to SignUpResponse
   factory SignUpResponse.fromJson(Map<String, dynamic> json) {
     return SignUpResponse(
-      success: json['success'] as bool,
       message: json['message'] as String,
-      token: json['token'] as String?,
-      user: json['user'] != null ? User.fromJson(json['user']) : null,
+      token: json['token'] as String,
+      user: User.fromJson(json['user'] as Map<String, dynamic>),
     );
   }
 
   // Convert to JSON
   Map<String, dynamic> toJson() {
-    return {
-      'success': success,
-      'message': message,
-      'token': token,
-      'user': user?.toJson(),
-    };
+    return {'message': message, 'token': token, 'user': user.toJson()};
   }
 }
 

@@ -1,66 +1,79 @@
 class User {
   final String id;
-  final String name;
+  final String firstName;
+  final String? secondName;
   final String email;
-  final String? profileImage;
-  final String? bio;
+  final String? socketId;
   final DateTime createdAt;
-  final bool isEmailVerified;
+  final DateTime updatedAt;
 
   User({
     required this.id,
-    required this.name,
+    required this.firstName,
+    this.secondName,
     required this.email,
-    this.profileImage,
-    this.bio,
+    this.socketId,
     required this.createdAt,
-    this.isEmailVerified = false,
+    required this.updatedAt,
   });
 
   // Convert JSON to User
   factory User.fromJson(Map<String, dynamic> json) {
+    // Handle fullName structure from API
+    final fullName = json['fullName'] as Map<String, dynamic>?;
+    final firstName =
+        fullName?['firstName'] as String? ?? json['firstName'] as String? ?? '';
+    final secondName =
+        fullName?['secondName'] as String? ?? json['secondName'] as String?;
+
     return User(
-      id: json['id'] as String,
-      name: json['name'] as String,
+      id: json['_id'] as String,
+      firstName: firstName,
+      secondName: secondName,
       email: json['email'] as String,
-      profileImage: json['profileImage'] as String?,
-      bio: json['bio'] as String?,
+      socketId: json['socketId'] as String?,
       createdAt: DateTime.parse(json['createdAt'] as String),
-      isEmailVerified: json['isEmailVerified'] as bool? ?? false,
+      updatedAt: DateTime.parse(json['updatedAt'] as String),
     );
   }
 
   // Convert User to JSON
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
-      'name': name,
+      '_id': id,
+      'fullName': {
+        'firstName': firstName,
+        if (secondName != null) 'secondName': secondName,
+      },
       'email': email,
-      'profileImage': profileImage,
-      'bio': bio,
+      'socketId': socketId,
       'createdAt': createdAt.toIso8601String(),
-      'isEmailVerified': isEmailVerified,
+      'updatedAt': updatedAt.toIso8601String(),
     };
   }
+
+  // Get full name
+  String get fullName =>
+      secondName != null ? '$firstName $secondName' : firstName;
 
   // Copy with method for updating user data
   User copyWith({
     String? id,
-    String? name,
+    String? firstName,
+    String? secondName,
     String? email,
-    String? profileImage,
-    String? bio,
+    String? socketId,
     DateTime? createdAt,
-    bool? isEmailVerified,
+    DateTime? updatedAt,
   }) {
     return User(
       id: id ?? this.id,
-      name: name ?? this.name,
+      firstName: firstName ?? this.firstName,
+      secondName: secondName ?? this.secondName,
       email: email ?? this.email,
-      profileImage: profileImage ?? this.profileImage,
-      bio: bio ?? this.bio,
+      socketId: socketId ?? this.socketId,
       createdAt: createdAt ?? this.createdAt,
-      isEmailVerified: isEmailVerified ?? this.isEmailVerified,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 }

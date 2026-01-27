@@ -11,32 +11,35 @@ class LoginRequest {
 }
 
 class SignUpRequest {
-  final String name;
+  final String firstName;
+  final String secondName;
   final String email;
   final String password;
-  final String confirmPassword;
 
   SignUpRequest({
-    required this.name,
+    required this.firstName,
+    required this.secondName,
     required this.email,
     required this.password,
-    required this.confirmPassword,
   });
 
   // Convert to JSON for API request
   Map<String, dynamic> toJson() {
     return {
-      'name': name,
+      'firstName': firstName,
+      'secondName': secondName,
       'email': email,
       'password': password,
-      'confirmPassword': confirmPassword,
     };
   }
 
   // Validate request
   String? validate() {
-    if (name.isEmpty) {
-      return 'Name is required';
+    if (firstName.isEmpty) {
+      return 'First name is required';
+    }
+    if (secondName.isEmpty) {
+      return 'Last name is required';
     }
     if (email.isEmpty) {
       return 'Email is required';
@@ -49,9 +52,6 @@ class SignUpRequest {
     }
     if (password.length < 6) {
       return 'Password must be at least 6 characters';
-    }
-    if (password != confirmPassword) {
-      return 'Passwords do not match';
     }
     return null;
   }

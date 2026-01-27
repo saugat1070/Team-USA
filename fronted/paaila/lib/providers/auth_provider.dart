@@ -51,18 +51,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
       final response = await AuthService.login(loginRequest);
 
-      if (response.success && response.user != null) {
-        state = state.copyWith(
-          isLoading: false,
-          isAuthenticated: true,
-          user: response.user,
-          successMessage: response.message,
-        );
-        return true;
-      } else {
-        state = state.copyWith(isLoading: false, error: response.message);
-        return false;
-      }
+      // Login response only returns token and message, fetch user separately
+      final currentUser = await AuthService.getCurrentUser();
+
+      state = state.copyWith(
+        isLoading: false,
+        isAuthenticated: true,
+        user: currentUser,
+        successMessage: response.message,
+      );
+      return true;
     } on ApiError catch (e) {
       state = state.copyWith(isLoading: false, error: e.message);
       return false;
@@ -77,19 +75,19 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   // Sign up method
   Future<bool> signUp(
-    String name,
+    String firstName,
+    String secondName,
     String email,
     String password,
-    String confirmPassword,
   ) async {
     try {
       state = state.copyWith(isLoading: true, error: null);
 
       final signUpRequest = SignUpRequest(
-        name: name,
+        firstName: firstName,
+        secondName: secondName,
         email: email,
         password: password,
-        confirmPassword: confirmPassword,
       );
 
       // Validation happens inside SignUpRequest
@@ -101,18 +99,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
       final response = await AuthService.signUp(signUpRequest);
 
-      if (response.success && response.user != null) {
-        state = state.copyWith(
-          isLoading: false,
-          isAuthenticated: true,
-          user: response.user,
-          successMessage: response.message,
-        );
-        return true;
-      } else {
-        state = state.copyWith(isLoading: false, error: response.message);
-        return false;
-      }
+      state = state.copyWith(
+        isLoading: false,
+        isAuthenticated: true,
+        user: response.user,
+        successMessage: response.message,
+      );
+      return true;
     } on ApiError catch (e) {
       state = state.copyWith(isLoading: false, error: e.message);
       return false;
@@ -128,29 +121,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
   // Logout method
   Future<void> logout() async {
     try {
-      state = state.copyWith(isLoading: true);
+      state = state.copyWith(isLoading: true, error: null);
       await AuthService.logout();
-      state = AuthState(); // Reset to initial state
+      state = AuthState();
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        error: 'Logout failed: ${e.toString()}',
+        error: 'An unexpected error occurred: ${e.toString()}',
       );
     }
   }
-
-  // Clear error message
-  void clearError() {
-    state = state.copyWith(error: null);
-  }
-
-  // Clear success message
-  void clearSuccessMessage() {
-    state = state.copyWith(successMessage: null);
-  }
-
-  // Check if user is logged in
-  bool get isLoggedIn => state.isAuthenticated && state.user != null;
 }
 
 // Create the auth provider

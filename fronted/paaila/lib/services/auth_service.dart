@@ -6,7 +6,7 @@ import '../models/auth_response_models.dart';
 
 class AuthService {
   static const String baseUrl =
-      'http://your-api-url.com/api'; // Update with your API URL
+      'http://192.168.1.164:3000/api/v1'; // Update with your API URL
   static String? _authToken;
 
   // Get stored auth token
@@ -27,7 +27,7 @@ class AuthService {
     try {
       final response = await http
           .post(
-            Uri.parse('$baseUrl/auth/login'),
+            Uri.parse('$baseUrl/login'),
             headers: {
               'Content-Type': 'application/json',
               'Accept': 'application/json',
@@ -44,9 +44,7 @@ class AuthService {
         final loginResponse = LoginResponse.fromJson(jsonResponse);
 
         // Store token if login successful
-        if (loginResponse.success && loginResponse.token != null) {
-          setAuthToken(loginResponse.token!);
-        }
+        setAuthToken(loginResponse.token);
 
         return loginResponse;
       } else if (response.statusCode == 401) {
@@ -84,7 +82,7 @@ class AuthService {
 
       final response = await http
           .post(
-            Uri.parse('$baseUrl/auth/signup'),
+            Uri.parse('$baseUrl/register'),
             headers: {
               'Content-Type': 'application/json',
               'Accept': 'application/json',
@@ -96,14 +94,12 @@ class AuthService {
             onTimeout: () => throw Exception('Request timeout'),
           );
 
-      if (response.statusCode == 201) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         final jsonResponse = jsonDecode(response.body);
         final signUpResponse = SignUpResponse.fromJson(jsonResponse);
 
         // Store token if signup successful
-        if (signUpResponse.success && signUpResponse.token != null) {
-          setAuthToken(signUpResponse.token!);
-        }
+        setAuthToken(signUpResponse.token);
 
         return signUpResponse;
       } else if (response.statusCode == 400) {
