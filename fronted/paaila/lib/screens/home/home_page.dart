@@ -56,23 +56,26 @@ class HomePage extends ConsumerWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        Text(
-                          'Paaila',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Text(
+                            'Paaila',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
                           ),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          'Claim your territory, one step at a time',
-                          style: TextStyle(fontSize: 12, color: Colors.white70),
-                        ),
-                      ],
+                          SizedBox(height: 4),
+                          Text(
+                            'Claim your territory, one step at a time',
+                            style: TextStyle(fontSize: 12, color: Colors.white70),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
                     ),
                     IconButton(
                       icon: const Icon(Icons.logout, color: Colors.white),
@@ -165,13 +168,17 @@ class HomePage extends ConsumerWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: const [
-                    Text(
-                      'Today\'s Challenge',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                    Flexible(
+                      child: Text(
+                        'Today\'s Challenge',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    SizedBox(width: 8),
                     Chip(
                       label: Text('4 Day Streak!'),
                       backgroundColor: Color(0xFFFF6B6B),

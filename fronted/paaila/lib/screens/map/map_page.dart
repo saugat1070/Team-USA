@@ -1,14 +1,12 @@
-import 'dart:async';
-import 'dart:math';
-
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:geolocator/geolocator.dart';
-
-import '../../models/run.dart';
 import '../../providers/location_provider.dart';
-import '../../repositories/run_repository.dart';
+
+/// Fallback center if location is not yet available.
+const LatLng _kDefaultCenter = LatLng(27.7172, 85.3240); // Kathmandu
 
 class MapPage extends ConsumerStatefulWidget {
   const MapPage({super.key});
@@ -18,42 +16,72 @@ class MapPage extends ConsumerStatefulWidget {
 }
 
 class _MapPageState extends ConsumerState<MapPage> {
-  GoogleMapController? _mapController;
-
-  final List<LatLng> _routePoints = [];
-  final Set<Polyline> _polylines = {};
-  final Set<Marker> _markers = {};
-  final List<Run> _savedRuns = [];
-
-  /// Initial position of the user (locked once set)
-  LatLng? _initialPosition;
-
-  DateTime? _startTime;
-  double _totalDistance = 0.0;
-
-  /// Run session state
-  bool _isTracking = false;
-  Duration _lastRunDuration = Duration.zero;
-  double _lastRunDistance = 0.0;
-  double _lastRunPace = 0.0; // min/km
+  final Set<Polygon> _polygons = {};
 
   @override
   void initState() {
     super.initState();
+    _loadDistricts();
+  }
 
-    /// Request permission + initial location
-    Future.microtask(() {
-      ref.read(locationProvider.notifier).requestAndGetLocation();
-      _loadSavedRuns();
-    });
+  Future<void> _loadDistricts() async {
+    try {
+      final String jsonString =
+          await rootBundle.loadString('assets/data/district.json');
+      final Map<String, dynamic> jsonResponse = json.decode(jsonString);
+      final List<dynamic> features = jsonResponse['features']?? [];
+
+      final Set<Polygon> newPolygons = {};
+
+      for (var feature in features) {
+        // Handle Polygon type
+        if (feature['geometry']['type'] == 'Polygon') {
+          // GeoJSON coordinates for Polygon are typically a list of rings (List<List<List<double>>>)
+          // The first ring is the exterior boundary.
+          final List<dynamic> coordinates =
+              feature['geometry']['coordinates'][0];
+          final List<LatLng> points = coordinates.map((coord) {
+            // GeoJSON order is [longitude, latitude]
+            return LatLng(
+                (coord[1] as num).toDouble(), (coord[0] as num).toDouble());
+          }).toList();
+
+          newPolygons.add(
+            Polygon(
+              polygonId:
+                  PolygonId(feature['properties']['shapeName'] ?? 'unknown'),
+              points: points,
+              strokeWidth: 2,
+              strokeColor: const Color(0xFF00A86B),
+              fillColor: const Color(0xFF000000), // Fixed typo
+            ),
+          );
+        }
+      }
+
+      setState(() {
+        _polygons.addAll(newPolygons);
+      });
+    } catch (e) {
+      debugPrint('Error loading districts: $e');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final locationState = ref.watch(locationProvider);
-    final locationStream = ref.watch(locationUpdatesProvider);
+    
+
+    // Determine map center: use current location if available, otherwise fallback.
+    final LatLng center = (locationState.position != null)
+        ? LatLng(
+            locationState.position!.latitude,
+            locationState.position!.longitude,
+          )
+        : _kDefaultCenter;
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF2FFF7),
       appBar: AppBar(
         backgroundColor: const Color(0xFF00A86B),
         elevation: 0,
@@ -81,383 +109,278 @@ class _MapPageState extends ConsumerState<MapPage> {
           ],
         ),
       ),
-      body: locationState.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : locationState.position == null
-              ? const Center(child: Text('Location not available'))
-              : Column(
-                  children: [
-                    /// 🗺 Google Map
-                    Expanded(
-                      child: Container(
-                        margin: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.grey.shade300),
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
-                          child: GoogleMap(
-                            initialCameraPosition: CameraPosition(
-                              target: LatLng(
-                                locationState.position!.latitude,
-                                locationState.position!.longitude,
-                              ),
-                              zoom: 17,
-                            ),
-                            markers: _markers,
-                            myLocationEnabled: true,
-                            myLocationButtonEnabled: true,
-                            polylines: _polylines,
-                            onMapCreated: (controller) {
-                              _mapController = controller;
-                            },
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    /// ▶️ Controls
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: _isTracking ? null : _startRun,
-                              child: const Text('Start'),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: _isTracking ? _stopRun : null,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.redAccent,
-                              ),
-                              child: const Text('Stop'),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    /// 📊 Stats Panel
-                    locationStream.when(
-                      data: (position) {
-                        if (_isTracking) {
-                          _handleNewPosition(position);
-                        }
-
-                        return _buildStats();
-                      },
-                      loading: () => _buildStats(),
-                      error: (e, _) => Text('Error: $e'),
-                    ),
-                  ],
-                ),
-    );
-  }
-
-  /// Handle live location updates
-  void _handleNewPosition(Position position) {
-    final newPoint = LatLng(position.latitude, position.longitude);
-
-    if (_routePoints.isEmpty) {
-      /// First point: lock as initial position and add a marker
-      _initialPosition = newPoint;
-      _markers
-        ..clear()
-        ..add(
-          const Marker(
-            markerId: MarkerId('start'),
-            // position is set below when copying with newPoint
-          ),
-        );
-
-      // Replace the default marker with one at the actual coordinates
-      _markers
-        ..clear()
-        ..add(
-          Marker(
-            markerId: const MarkerId('start'),
-            position: newPoint,
-            infoWindow: const InfoWindow(title: 'Start Location'),
-          ),
-        );
-
-      _startTime = DateTime.now();
-    } else {
-      _totalDistance += _calculateDistance(
-        _routePoints.last.latitude,
-        _routePoints.last.longitude,
-        newPoint.latitude,
-        newPoint.longitude,
-      );
-    }
-
-    _routePoints.add(newPoint);
-
-    // Update the current run polyline while preserving saved run polylines.
-    _polylines.removeWhere(
-      (polyline) => polyline.polylineId.value == 'current_route',
-    );
-
-    _polylines.add(
-      Polyline(
-        polylineId: const PolylineId('current_route'),
-        points: List.unmodifiable(_routePoints),
-        color: Colors.blue,
-        width: 5,
-      ),
-    );
-
-    _mapController?.animateCamera(
-      CameraUpdate.newLatLng(newPoint),
-    );
-  }
-
-  /// Stats UI
-  Widget _buildStats() {
-    final bool isRunning = _isTracking;
-
-    final duration = isRunning
-        ? (_startTime == null
-            ? Duration.zero
-            : DateTime.now().difference(_startTime!))
-        : _lastRunDuration;
-
-    final distanceMeters =
-        isRunning ? _totalDistance : _lastRunDistance; // meters
-    final distanceKm = distanceMeters / 1000.0;
-
-    // Calculate current or last pace
-    final pace = () {
-      if (distanceKm <= 0 || duration.inSeconds == 0) return 0.0;
-      final minutes = duration.inSeconds / 60.0;
-      return minutes / distanceKm; // min/km
-    }();
-
-    if (!isRunning) {
-      // Cache last run stats so they don't change after stop
-      _lastRunPace = pace;
-    }
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+      body: Stack(
         children: [
-          _statItem('Distance', '${distanceKm.toStringAsFixed(2)} km'),
-          _statItem(
-            'Time',
-            '${duration.inMinutes}:${(duration.inSeconds % 60).toString().padLeft(2, '0')}',
+          // Google Map as background
+          Positioned.fill(
+            child: _BackgroundMap(
+              center: center,
+              polygons: _polygons,
+            ),
           ),
-          _statItem(
-            'Pace',
-            (pace == 0.0 && !_isTracking && _lastRunPace > 0)
-                ? '${_lastRunPace.toStringAsFixed(2)} min/km'
-                : (pace == 0.0
-                    ? '-'
-                    : '${pace.toStringAsFixed(2)} min/km'),
+
+          // Light gradient overlay to keep soft look
+          Positioned.fill(
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.white.withOpacity(0.4),
+                      Colors.white.withOpacity(0.05),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // Colored territory shapes
+          // const _TerritoryShapes(),
+
+          // Territory summary card
+          Align(
+            alignment: Alignment.topCenter,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              child: _TerritoryCard(),
+            ),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.white,
+        elevation: 4,
+        onPressed: () {
+          // Intentionally left empty – visual only.
+        },
+        child: const Icon(
+          Icons.navigation_rounded,
+          color: Color(0xFF00A86B),
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+    );
+  }
+}
+
+class _TerritoryCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF00A86B).withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.place_rounded,
+                  color: Color(0xFF00A86B),
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Your Territory',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    'Kathmandu Valley',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _TerritoryStat(
+                  label: 'Claimed Routes',
+                  value: '2',
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _TerritoryStat(
+                  label: 'Total Distance',
+                  value: '5.3 km',
+                  highlight: true,
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _statItem(String label, String value) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        Text(label, style: const TextStyle(color: Colors.grey)),
-      ],
-    );
-  }
+class _TerritoryStat extends StatelessWidget {
+  final String label;
+  final String value;
+  final bool highlight;
 
-  void _startRun() {
-    setState(() {
-      _isTracking = true;
-      _routePoints.clear();
-      _polylines.clear();
-      _markers.clear();
-      _initialPosition = null;
-      _startTime = null;
-      _totalDistance = 0.0;
-      _lastRunDuration = Duration.zero;
-      _lastRunDistance = 0.0;
-      _lastRunPace = 0.0;
-    });
-  }
+  const _TerritoryStat({
+    required this.label,
+    required this.value,
+    this.highlight = false,
+  });
 
-  void _stopRun() {
-    if (!_isTracking) return;
-
-    final DateTime? startedAt = _startTime;
-    final DateTime endedAt = DateTime.now();
-
-    setState(() {
-      _isTracking = false;
-
-      if (startedAt != null) {
-        _lastRunDuration = endedAt.difference(startedAt);
-      } else {
-        _lastRunDuration = Duration.zero;
-      }
-
-      _lastRunDistance = _totalDistance;
-
-      final distanceKm = _lastRunDistance / 1000.0;
-      if (distanceKm > 0 && _lastRunDuration.inSeconds > 0) {
-        final minutes = _lastRunDuration.inSeconds / 60.0;
-        _lastRunPace = minutes / distanceKm;
-      } else {
-        _lastRunPace = 0.0;
-      }
-    });
-
-    // Persist this run so it can be shown later on the map / in history.
-    if (startedAt != null && _routePoints.isNotEmpty) {
-      final run = Run(
-        id: endedAt.millisecondsSinceEpoch.toString(), // simple local id
-        startedAt: startedAt,
-        endedAt: endedAt,
-        distanceMeters: _totalDistance,
-        path: List.unmodifiable(_routePoints),
-      );
-
-      // Fire-and-forget; in a real app you may want to show errors / loading.
-      ref.read(runRepositoryProvider).saveRun(run);
-
-      // Also add to in-memory list so it appears immediately.
-      setState(() {
-        _savedRuns.add(run);
-      });
-      _rebuildSavedRunPolylines();
-    }
-  }
-
-  Future<void> _loadSavedRuns() async {
-    final runs = await ref.read(runRepositoryProvider).getRuns();
-    if (!mounted) return;
-
-    setState(() {
-      _savedRuns
-        ..clear()
-        ..addAll(runs);
-    });
-    _rebuildSavedRunPolylines();
-  }
-
-  void _rebuildSavedRunPolylines() {
-    // Remove existing saved run polylines (those whose id starts with 'run_')
-    _polylines.removeWhere(
-      (polyline) => polyline.polylineId.value.startsWith('run_'),
-    );
-
-    for (final run in _savedRuns) {
-      final id = PolylineId('run_${run.id}');
-      _polylines.add(
-        Polyline(
-          polylineId: id,
-          points: run.path,
-          color: Colors.green.withOpacity(0.7),
-          width: 4,
-          consumeTapEvents: true,
-          onTap: () => _showRunDetails(run),
-        ),
-      );
-    }
-  }
-
-  void _showRunDetails(Run run) {
-    final duration = run.duration;
-    final pace = run.paceMinutesPerKm;
-
-    showModalBottomSheet<void>(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+      decoration: BoxDecoration(
+        color: highlight ? const Color(0xFFF0FFF9) : const Color(0xFFF7F9FB),
+        borderRadius: BorderRadius.circular(14),
       ),
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Run Details',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _statItem('Distance', '${run.distanceKm.toStringAsFixed(2)} km'),
-                  _statItem(
-                    'Duration',
-                    '${duration.inMinutes}:${(duration.inSeconds % 60).toString().padLeft(2, '0')}',
-                  ),
-                  _statItem(
-                    'Pace',
-                    pace == null ? '-' : '${pace.toStringAsFixed(2)} min/km',
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Started: ${run.startedAt}',
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
-              ),
-              Text(
-                'Ended:   ${run.endedAt}',
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
-              ),
-              const SizedBox(height: 12),
-            ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11,
+              color: Colors.grey,
+            ),
           ),
-        );
-      },
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF00A86B),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TerritoryShapes extends StatelessWidget {
+  const _TerritoryShapes();
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      ignoring: true,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final width = constraints.maxWidth;
+          final height = constraints.maxHeight;
+
+          return Stack(
+            children: [
+              _blob(
+                left: width * 0.15,
+                top: height * 0.32,
+                color: const Color(0xFF4CAF50).withOpacity(0.4),
+              ),
+              _blob(
+                left: width * 0.45,
+                top: height * 0.30,
+                color: const Color(0xFF42A5F5).withOpacity(0.4),
+              ),
+              _blob(
+                left: width * 0.25,
+                top: height * 0.55,
+                color: const Color(0xFF7E57C2).withOpacity(0.4),
+              ),
+              _blob(
+                left: width * 0.58,
+                top: height * 0.48,
+                color: const Color(0xFFEF5350).withOpacity(0.4),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 
-  /// Distance calculation (Haversine)
-  double _calculateDistance(
-    double lat1,
-    double lon1,
-    double lat2,
-    double lon2,
-  ) {
-    const earthRadius = 6371000; // meters
-
-    final dLat = _degToRad(lat2 - lat1);
-    final dLon = _degToRad(lon2 - lon1);
-
-    final a = sin(dLat / 2) * sin(dLat / 2) +
-        cos(_degToRad(lat1)) *
-            cos(_degToRad(lat2)) *
-            sin(dLon / 2) *
-            sin(dLon / 2);
-
-    final c = 2 * atan2(sqrt(a), sqrt(1 - a));
-
-    return earthRadius * c;
+  Widget _blob({
+    required double left,
+    required double top,
+    required Color color,
+  }) {
+    return Positioned(
+      left: left,
+      top: top,
+      child: Transform.rotate(
+        angle: 0.2,
+        child: Container(
+          width: 90,
+          height: 70,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(40),
+          ),
+        ),
+      ),
+    );
   }
+}
 
-  double _degToRad(double deg) => deg * pi / 180;
+class _BackgroundMap extends StatelessWidget {
+  const _BackgroundMap({
+    required this.center,
+    required this.polygons,
+  });
+
+  final LatLng center;
+  final Set<Polygon> polygons;
+
+  @override
+  Widget build(BuildContext context) {
+    return GoogleMap(
+      initialCameraPosition: CameraPosition(
+        target: center,
+        zoom: 13,
+      ),
+      myLocationEnabled: true,
+      myLocationButtonEnabled: false,
+      zoomControlsEnabled: false,
+      compassEnabled: false,
+      mapToolbarEnabled: false,
+      trafficEnabled: false,
+      buildingsEnabled: false,
+      polygons: polygons,
+    );
+  }
 }

@@ -39,6 +39,7 @@ dependencies:
   geolocator: ^14.0.2
   geocoding: ^2.0.5
   google_maps_flutter: ^2.9.0
+  socket_io_client: ^3.1.4
 
 
 dev_dependencies:
@@ -63,8 +64,8 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
+  assets:
+    - assets/data/district.json
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

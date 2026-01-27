@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 
-import '../screens/map/map_page.dart';
+import '../screens/map/map_for_running.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../screens/map/map_for_running.dart';
+import '../providers/location_provider.dart';
 
-class ActivityPage extends StatefulWidget {
+class ActivityPage extends ConsumerStatefulWidget {
   const ActivityPage({super.key});
 
   @override
-  State<ActivityPage> createState() => _ActivityPageState();
+  ConsumerState<ActivityPage> createState() => _ActivityPageState();
 }
 
-class _ActivityPageState extends State<ActivityPage> {
+class _ActivityPageState extends ConsumerState<ActivityPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -175,9 +178,9 @@ class _ActivityPageState extends State<ActivityPage> {
                   shadowColor: const Color(0xFF00A86B).withOpacity(0.4),
                 ),
                 icon: const Icon(Icons.play_arrow_rounded, color: Colors.white),
-                label: const Text(
-                  'Start Activity',
-                  style: TextStyle(
+                label: Text(
+                  ref.watch(locationProvider).isTracking ? 'Stop Activity' : 'Start Activity',
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
@@ -189,6 +192,7 @@ class _ActivityPageState extends State<ActivityPage> {
         ),
       ),
     );
+    
   }
 
   Widget _routeTile({
@@ -235,7 +239,7 @@ class _ActivityPageState extends State<ActivityPage> {
   void _onStartActivity() {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => const MapPage(),
+        builder: (_) => const MapForRunningPage(),
       ),
     );
   }

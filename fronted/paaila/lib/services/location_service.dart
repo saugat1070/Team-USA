@@ -33,6 +33,8 @@ class LocationService {
         desiredAccuracy: LocationAccuracy.best,
       );
 
+      print("Location here: ${position}");
+
       return position;
     } catch (e) {
       print('Error getting location: $e');
