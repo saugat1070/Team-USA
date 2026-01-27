@@ -15,18 +15,21 @@ class _SplashScreenState extends State<SplashScreen> {
   final List<SplashPage> splashPages = [
     SplashPage(
       image: 'lib/images/onboarding-img-02.png',
-      title: 'Welcome to Paaila',
-      description: 'Track your running progress and achieve your goals',
+      title: 'Conquer Your City',
+      description:
+          'Run your favorite routes to claim them. Defend your turf before someone else takes it!',
     ),
     SplashPage(
       image: 'lib/images/onboarding-img-01.png',
-      title: 'Join the Community',
-      description: 'Compete with other runners and climb the leaderboard',
+      title: 'Climb The Leaderboard',
+      description:
+          'Turn every step into a win. Outrun your friends and claim the top spot!',
     ),
     SplashPage(
       image: 'lib/images/onboarding-img-03.png',
-      title: 'Start Running',
-      description: 'Begin your running journey today',
+      title: 'Level Up Your Health',
+      description:
+          'Boost your heart, mind, and spirit. Make fitness the most fun part of your day!',
     ),
   ];
 
@@ -57,7 +60,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.pureWhite, // Pure white background
+      backgroundColor: AppColors.pureWhite,
       body: Stack(
         children: [
           // PageView for splash pages
@@ -82,17 +85,20 @@ class _SplashScreenState extends State<SplashScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 // Skip button
-                TextButton(
-                  onPressed: () {
-                    // Navigate to login screen directly
-                    Navigator.of(context).pushReplacementNamed('/login');
-                  },
-                  child: Text(
-                    'Skip',
-                    style: TextStyle(
-                      color: AppColors.primaryGreen,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                  child: TextButton(
+                    onPressed: () {
+                      // Navigate to login screen directly
+                      Navigator.of(context).pushReplacementNamed('/login');
+                    },
+                    child: Text(
+                      'Skip',
+                      style: const TextStyle(
+                        color: AppColors.primaryGreen,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                 ),
@@ -115,14 +121,17 @@ class _SplashScreenState extends State<SplashScreen> {
                   ),
                 ),
                 // Next button
-                TextButton(
-                  onPressed: _goToNext,
-                  child: Text(
-                    'Next',
-                    style: TextStyle(
-                      color: AppColors.primaryGreen,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                  child: TextButton(
+                    onPressed: _goToNext,
+                    child: const Text(
+                      'Next',
+                      style: TextStyle(
+                        color: AppColors.primaryGreen,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),
@@ -135,48 +144,57 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Widget _buildSplashPage(SplashPage page) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 40.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // Image - fits screen width
-          Expanded(
-            flex: 2,
-            child: Center(
-              child: Image.asset(
-                page.image,
-                width: double.infinity,
-                fit: BoxFit.fitWidth,
-                errorBuilder: (context, error, stackTrace) {
-                  return Center(
-                    child: Icon(
-                      Icons.image_not_supported,
-                      size: 80,
-                      color: Colors.grey.shade400,
-                    ),
-                  );
-                },
-              ),
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        // Image - full width with no horizontal padding
+        Expanded(
+          flex: 2,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 40.0),
+            child: Image.asset(
+              page.image,
+              width: double.infinity,
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) {
+                return Center(
+                  child: Icon(
+                    Icons.image_not_supported,
+                    size: 80,
+                    color: Colors.grey.shade400,
+                  ),
+                );
+              },
             ),
           ),
-          const SizedBox(height: 40),
-          // Title
-          Text(
-            page.title,
-            style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-            textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 40),
+        // Text section with horizontal padding
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          child: Column(
+            children: [
+              // Title
+              Text(
+                page.title,
+                style: const TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              // Description
+              Text(
+                page.description,
+                style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-          // Description
-          Text(
-            page.description,
-            style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
-            textAlign: TextAlign.center,
-          ),
-          const Expanded(child: SizedBox()),
-        ],
-      ),
+        ),
+        const Expanded(child: SizedBox()),
+      ],
     );
   }
 }
