@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+<<<<<<< HEAD
 import 'package:paaila/screens/map/map_page.dart';
+=======
+import 'screens/splash/animated_splash_screen.dart';
+>>>>>>> 713c53888257b272c97bdd834e72005ef8eef421
 import 'screens/splash/splash_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/sign_up.dart';
@@ -21,10 +25,16 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+<<<<<<< HEAD
       home: const HomePage(),
       // home: const SplashScreen(),
+=======
+      // home: const HomePage(),
+      home: const AnimatedSplashScreen(),
+>>>>>>> 713c53888257b272c97bdd834e72005ef8eef421
 
       routes: {
+        '/onboarding': (context) => const SplashScreen(),
         '/login': (context) => const LoginScreen(),
         '/signup': (context) => const SignUpScreen(),
         '/home': (context) => const HomePage(),
