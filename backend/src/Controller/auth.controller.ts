@@ -51,6 +51,7 @@ export const loginUser = async function(req:Request,res:Response){
     if(!user){
         return res.status(404).json({message:"user with this email is not found"});
     }
+    console.log(user)
     const isPasswordTrue = comparePassword(password,user?.password);
     if(!isPasswordTrue){
         res.status(401).json({message:"Incorrect password"});
