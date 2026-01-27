@@ -7,7 +7,7 @@ import 'package:paaila/screens/map/map_page.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/bottom_nav_provider.dart';
 import '../../widgets/bottom_nav_bar.dart';
-import '../../screens/profile/user_profile.dart' hide Scaffold;
+import '../../screens/profile/user_profile.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
@@ -17,11 +17,11 @@ class HomePage extends ConsumerWidget {
     final currentIndex = ref.watch(bottomNavIndexProvider);
 
     final List<Widget> _pages = [
-    _buildHomePage(context, ref),
-    MapPage(),
-    ActivityPage(),
-    RankingPage(),
-    UserProfilePage(),
+      _buildHomePage(context, ref),
+      MapPage(),
+      ActivityPage(),
+      RankingPage(),
+      UserProfilePage(),
     ];
 
     return Scaffold(
@@ -71,7 +71,10 @@ class HomePage extends ConsumerWidget {
                           SizedBox(height: 4),
                           Text(
                             'Claim your territory, one step at a time',
-                            style: TextStyle(fontSize: 12, color: Colors.white70),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.white70,
+                            ),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ],
@@ -270,7 +273,7 @@ class HomePage extends ConsumerWidget {
                         const Color(0xFF1ABC9C),
                         () {
                           // Switch bottom nav to Activity tab
-                          ref.read(bottomNavIndexProvider.notifier).state = 2;
+                          ref.read(bottomNavIndexProvider.notifier).setIndex(2);
                         },
                       ),
                     ),
@@ -283,7 +286,7 @@ class HomePage extends ConsumerWidget {
                         const Color(0xFF2196F3),
                         () {
                           // Switch bottom nav to Map tab
-                          ref.read(bottomNavIndexProvider.notifier).state = 1;
+                          ref.read(bottomNavIndexProvider.notifier).setIndex(1);
                         },
                       ),
                     ),

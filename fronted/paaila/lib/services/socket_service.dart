@@ -43,12 +43,10 @@ class SocketService {
   }
 
   void sendLocation(double lat, double lng) {
+    print("Connection status: $_connected");
     if (!_connected) return;
 
-    socket.emit("walk:start", {
-      "latitude": lat,
-      "longitude": lng,
-    });
+    socket.emit("walk:start", {"latitude": lat, "longitude": lng});
     print("Location sent: $lat, $lng");
   }
 
