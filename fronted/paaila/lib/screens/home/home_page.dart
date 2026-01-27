@@ -7,7 +7,7 @@ import 'package:paaila/screens/map/map_page.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/bottom_nav_provider.dart';
 import '../../widgets/bottom_nav_bar.dart';
-import '../../screens/profile/user_profile.dart';
+import '../../screens/profile/user_profile.dart' hide Scaffold;
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
