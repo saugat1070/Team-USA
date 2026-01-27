@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/bottom_nav_provider.dart';
 
 class BottomNavBar extends ConsumerWidget {
+   
   const BottomNavBar({super.key});
 
   @override

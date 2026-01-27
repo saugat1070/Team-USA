@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:paaila/pages/activity_page.dart';
+import 'package:paaila/pages/profile_page.dart';
+import 'package:paaila/pages/ranking_page.dart';
+import 'package:paaila/screens/map/map_page.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/bottom_nav_provider.dart';
 import '../../widgets/bottom_nav_bar.dart';
+import '../../screens/profile/user_profile.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
@@ -11,11 +16,17 @@ class HomePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final currentIndex = ref.watch(bottomNavIndexProvider);
 
+    final List<Widget> _pages = [
+    _buildHomePage(context, ref),
+    MapPage(),
+    ActivityPage(),
+    RankingPage(),
+    UserProfilePage(),
+    ];
+
     return Scaffold(
-      body: currentIndex == 0
-          ? _buildHomePage(context, ref)
-          : _buildOtherPages(currentIndex),
-      bottomNavigationBar: const BottomNavBar(),
+      body: _pages[currentIndex],
+      bottomNavigationBar: BottomNavBar(),
     );
   }
 
@@ -250,7 +261,10 @@ class HomePage extends ConsumerWidget {
                         'Begin tracking',
                         Icons.play_arrow,
                         const Color(0xFF1ABC9C),
-                        () {},
+                        () {
+                          // Switch bottom nav to Activity tab
+                          ref.read(bottomNavIndexProvider.notifier).state = 2;
+                        },
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -260,7 +274,10 @@ class HomePage extends ConsumerWidget {
                         'Explore routes',
                         Icons.map,
                         const Color(0xFF2196F3),
-                        () {},
+                        () {
+                          // Switch bottom nav to Map tab
+                          ref.read(bottomNavIndexProvider.notifier).state = 1;
+                        },
                       ),
                     ),
                   ],

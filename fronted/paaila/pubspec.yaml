@@ -36,6 +36,10 @@ dependencies:
   cupertino_icons: ^1.0.8
   http: ^1.6.0
   flutter_riverpod: ^2.4.0
+  geolocator: ^14.0.2
+  geocoding: ^2.0.5
+  google_maps_flutter: ^2.9.0
+
 
 dev_dependencies:
   flutter_test:
