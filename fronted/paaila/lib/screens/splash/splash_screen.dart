@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:paaila/core/constants/app_colors.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -13,19 +14,22 @@ class _SplashScreenState extends State<SplashScreen> {
 
   final List<SplashPage> splashPages = [
     SplashPage(
-      image: 'assets/splash_1.png',
-      title: 'Welcome to Paaila',
-      description: 'Track your running progress and achieve your goals',
+      image: 'lib/images/onboarding-img-02.png',
+      title: 'Conquer Your City',
+      description:
+          'Run your favorite routes to claim them. Defend your turf before someone else takes it!',
     ),
     SplashPage(
-      image: 'assets/splash_2.png',
-      title: 'Join the Community',
-      description: 'Compete with other runners and climb the leaderboard',
+      image: 'lib/images/onboarding-img-01.png',
+      title: 'Climb The Leaderboard',
+      description:
+          'Turn every step into a win. Outrun your friends and claim the top spot!',
     ),
     SplashPage(
-      image: 'assets/splash_3.png',
-      title: 'Start Running',
-      description: 'Begin your running journey today',
+      image: 'lib/images/onboarding-img-03.png',
+      title: 'Level Up Your Health',
+      description:
+          'Boost your heart, mind, and spirit. Make fitness the most fun part of your day!',
     ),
   ];
 
@@ -53,18 +57,10 @@ class _SplashScreenState extends State<SplashScreen> {
     }
   }
 
-  void _goToBack() {
-    if (_currentPage > 0) {
-      _pageController.previousPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.pureWhite,
       body: Stack(
         children: [
           // PageView for splash pages
@@ -82,64 +78,61 @@ class _SplashScreenState extends State<SplashScreen> {
           ),
           // Dots indicator
           Positioned(
-            bottom: 80,
+            bottom: 30,
             left: 0,
             right: 0,
-            child: Center(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(
-                  splashPages.length,
-                  (index) => Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 5),
-                    width: _currentPage == index ? 12 : 8,
-                    height: _currentPage == index ? 12 : 8,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: _currentPage == index
-                          ? Colors.deepPurple
-                          : Colors.grey.shade400,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          // Back and Next buttons
-          Positioned(
-            bottom: 20,
-            left: 20,
-            right: 20,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Back button
-                GestureDetector(
-                  onTap: _currentPage > 0 ? _goToBack : null,
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: _currentPage > 0
-                          ? Colors.deepPurple
-                          : Colors.grey.shade300,
+                // Skip button
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                  child: TextButton(
+                    onPressed: () {
+                      // Navigate to login screen directly
+                      Navigator.of(context).pushReplacementNamed('/login');
+                    },
+                    child: Text(
+                      'Skip',
+                      style: const TextStyle(
+                        color: AppColors.primaryGreen,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                    child: Icon(
-                      Icons.arrow_back,
-                      color: _currentPage > 0 ? Colors.white : Colors.grey,
+                  ),
+                ),
+                // Page dots
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(
+                    splashPages.length,
+                    (index) => Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: _currentPage == index
+                            ? AppColors.primaryGreen
+                            : Colors.grey.shade300,
+                      ),
                     ),
                   ),
                 ),
                 // Next button
-                GestureDetector(
-                  onTap: _goToNext,
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.deepPurple,
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                  child: TextButton(
+                    onPressed: _goToNext,
+                    child: const Text(
+                      'Next',
+                      style: TextStyle(
+                        color: AppColors.primaryGreen,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                    child: const Icon(Icons.arrow_forward, color: Colors.white),
                   ),
                 ),
               ],
@@ -151,54 +144,57 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Widget _buildSplashPage(SplashPage page) {
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // Image
-          Expanded(
-            flex: 2,
-            child: Center(
-              child: Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  color: Colors.grey.shade200,
-                ),
-                child: Image.asset(
-                  page.image,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Center(
-                      child: Icon(
-                        Icons.image_not_supported,
-                        size: 80,
-                        color: Colors.grey.shade400,
-                      ),
-                    );
-                  },
-                ),
-              ),
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        // Image - full width with no horizontal padding
+        Expanded(
+          flex: 2,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 40.0),
+            child: Image.asset(
+              page.image,
+              width: double.infinity,
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) {
+                return Center(
+                  child: Icon(
+                    Icons.image_not_supported,
+                    size: 80,
+                    color: Colors.grey.shade400,
+                  ),
+                );
+              },
             ),
           ),
-          const SizedBox(height: 40),
-          // Title
-          Text(
-            page.title,
-            style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-            textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 40),
+        // Text section with horizontal padding
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          child: Column(
+            children: [
+              // Title
+              Text(
+                page.title,
+                style: const TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              // Description
+              Text(
+                page.description,
+                style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-          // Description
-          Text(
-            page.description,
-            style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
-            textAlign: TextAlign.center,
-          ),
-          const Expanded(child: SizedBox()),
-        ],
-      ),
+        ),
+        const Expanded(child: SizedBox()),
+      ],
     );
   }
 }
