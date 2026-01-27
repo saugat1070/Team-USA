@@ -8,8 +8,14 @@ import 'screens/auth/sign_up.dart';
 import 'screens/home/home_page.dart';
 import 'pages/activity_page.dart';
 import 'screens/profile/user_profile.dart';
+import 'services/auth_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize auth service (load stored JWT)
+  await AuthService.init();
+
   runApp(const ProviderScope(child: MyApp()));
 }
 
