@@ -39,11 +39,11 @@ class _SplashScreenState extends State<SplashScreen> {
     _pageController = PageController();
   }
 
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
+//  @override
+//  void dispose() {
+  //  _pageController.dispose();
+  //  super.dispose();
+  //}
 
   void _goToNext() {
     if (_currentPage < splashPages.length - 1) {

@@ -47,7 +47,17 @@ class SocketService {
     if (!_connected) return;
 
     socket.emit("walk:start", {"latitude": lat, "longitude": lng});
-    print("Location sent: $lat, $lng");
+  }
+
+  /// Sends each new position during an active run (continuous stream).
+  /// Emit "walk:location" for the server to append to the current path.
+  void sendLocationUpdate(double lat, double lng) {
+    print("Location update sent: $lat, $lng");
+    print("Connected: $_connected");
+
+    if (!_connected) return;
+
+    socket.emit("walk:start", {"latitude": lat, "longitude": lng});
   }
 
   void stopRun() {
