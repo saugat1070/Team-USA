@@ -1,77 +1,111 @@
-# HackNova Backend
+# Paila Backend API
 
-## Overview
-Express + MongoDB backend with Socket.IO for realtime features. Base API path is `/api/v1`.
+Welcome to the Paila backend. This service powers realtime walking/running, district rooms, territory calculation, leaderboards, blogs, rewards, and streaks.
 
-## HTTP API Routes
+## Table of Contents
+- [Project Structure](#project-structure)
+- [Installation](#installation)
+- [Running the Application](#running-the-application)
+- [HTTP API](#http-api)
+- [Socket Events](#socket-events)
+- [Contributing](#contributing)
+- [License](#license)
+
+## Project Structure
+```
+backend/
+├── package.json
+├── README.md
+├── src/
+│   ├── Config/
+│   ├── Controller/
+│   ├── DTO/
+│   ├── Models/
+│   ├── Routes/
+│   ├── Service/
+│   ├── middleware/
+│   ├── socket/
+│   ├── utils/
+│   ├── main.ts
+│   └── server.ts
+└── uploads/
+```
+
+## Installation
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+2. Configure environment variables in your `.env` (example):
+   ```env
+   PORT=3000
+   MONGO_URI=your_mongodb_connection
+   JWT_SECRET=your_secret
+   REDIS_URL=your_redis_connection
+   ```
+
+## Running the Application
+```bash
+npm run dev
+```
+Server runs on http://localhost:3000
+
+## HTTP API
+Base path: `/api/v1`
 
 ### Auth
-- **POST** `/api/v1/register`
+- **POST** `/register`
   - Body: `{ firstName, lastName, email, password }`
-  - Response: `{ message, token, user }`
-
-- **POST** `/api/v1/login`
+- **POST** `/login`
   - Body: `{ email, password }`
-  - Response: `{ message, token }`
-
-- **GET** `/api/v1/profile`
+- **GET** `/profile`
   - Auth: `Authorization: Bearer <token>`
-  - Response: `{ message, data }`
 
-### Map
-- **POST** `/api/v1/seed-districts`
+### Map / District
+- **POST** `/seed-districts`
   - Seeds district data from GeoJSON.
-  - Response: `{ success, message }`
-
-- **POST** `/api/v1/get-district`
+- **POST** `/get-district`
   - Auth: `Authorization: Bearer <token>`
   - Body: `{ latitude, longitude }`
   - Response: `{ success, district, room }`
-  - Behavior: Finds district + creates/joins room for the user.
+
+### Leaderboard
+- **GET** `/leaderboard/:roomId`
+
+### Blog / Routes
+- **POST** `/blogs`
+  - Auth: `Authorization: Bearer <token>`
+  - multipart field: `images`
+- **GET** `/blogs`
+- **GET** `/blogs/:id`
+- **PUT** `/blogs/:id`
+  - Auth: `Authorization: Bearer <token>`
+  - multipart field: `images`
+- **DELETE** `/blogs/:id`
+  - Auth: `Authorization: Bearer <token>`
 
 ## Socket Events
 
 ### Client → Server
-- `join-room`
-  - Payload: `{ userId, roomId }`
-  - Joins room and activates membership.
-
-- `walk:start`
-  - Payload: `{ roomId, userId, latitude, longitude }`
-  - Pushes point to Redis list and broadcasts location.
-
-- `walk:end`
-  - Payload: `{ roomId, userId, activityType?: "walking" | "running" }`
-  - Reads points from Redis, stores GeoJSON LineString to MongoDB, returns `walk:result`.
-
-- `leave-room`
-  - Payload: none
-  - Leaves room and deactivates membership.
+- `join-room` — `{ roomId }`
+- `walk:start` — `{ latitude, longitude }`
+- `walk:end` — `{ activityType?: "walking" | "running" }`
+- `leave-room` — no payload
 
 ### Server → Client
 - `user-joined`
-  - Payload: `{ userId, message, participantsCount, timestamp }`
-
 - `location-update`
-  - Payload: `{ userId, latitude, longitude, timestamp }`
-
 - `walk:result`
-  - Payload on success: `{ ok: true, locationId, pointsCount, status }`
-  - Payload on failure: `{ ok: false, message }`
-
 - `user-left`
-  - Payload: `{ userId, message, participantsCount, timestamp }`
-
 - `user-disconnected`
-  - Payload: `{ userId, message, participantsCount, timestamp }`
-
 - `error`
-  - Payload: `{ message }`
 
-## Development
+## Contributing
+1. Fork the repo
+2. Create a branch (`git checkout -b feature-branch`)
+3. Commit your changes
+4. Push the branch and open a PR
 
-```bash
-cd backend
-npm install
-npm run dev
-```
+## License
+MIT
