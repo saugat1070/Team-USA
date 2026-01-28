@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../providers/auth_provider.dart';
 import '../../core/constants/app_colors.dart';
 
@@ -124,10 +125,19 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                         ),
                       ],
                     ),
-                    child: Icon(
-                      Icons.directions_run,
-                      size: 36,
-                      color: AppColors.pureWhite,
+                    child: Center(
+                      child: SizedBox(
+                        width: 42,
+                        height: 42,
+                        child: SvgPicture.asset(
+                          'assets/images/paila_brandmark.svg',
+                          fit: BoxFit.contain,
+                          colorFilter: ColorFilter.mode(
+                            AppColors.pureWhite,
+                            BlendMode.srcIn,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -157,7 +167,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                       child: _buildTextField(
                         controller: _firstNameController,
                         label: 'First Name',
-                        hint: 'John',
+                        hint: 'Balendra',
                         icon: Icons.person_outline,
                         enabled: !isLoading,
                       ),
@@ -167,7 +177,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                       child: _buildTextField(
                         controller: _lastNameController,
                         label: 'Last Name',
-                        hint: 'Doe',
+                        hint: 'Shah',
                         icon: Icons.person_outline,
                         enabled: !isLoading,
                       ),
@@ -179,7 +189,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 _buildTextField(
                   controller: _emailController,
                   label: 'Email',
-                  hint: 'your@email.com',
+                  hint: 'pm@email.com',
                   icon: Icons.email_outlined,
                   enabled: !isLoading,
                   keyboardType: TextInputType.emailAddress,

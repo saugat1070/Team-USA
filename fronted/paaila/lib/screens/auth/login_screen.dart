@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'sign_up.dart';
 import '../../providers/auth_provider.dart';
 import '../../core/constants/app_colors.dart';
@@ -108,39 +109,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                       ],
                     ),
-                    child: Icon(
-                      Icons.directions_run,
-                      size: 42,
-                      color: AppColors.pureWhite,
+                    child: Center(
+                      child: SizedBox(
+                        width: 48,
+                        height: 48,
+                        child: SvgPicture.asset(
+                          'assets/images/paila_brandmark.svg',
+                          fit: BoxFit.contain,
+                          colorFilter: ColorFilter.mode(
+                            AppColors.pureWhite,
+                            BlendMode.srcIn,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
                 const SizedBox(height: 24),
-                // Title
-                Center(
-                  child: Text(
-                    'Paaila',
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                // Subtitle
-                Center(
-                  child: Text(
-                    'Your journey to wellness begins here',
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: AppColors.textSecondary,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                const SizedBox(height: 48),
+
                 // Welcome back text
                 Text(
                   'Welcome back',
