@@ -8,6 +8,9 @@
     "lib": ["esnext"],
     "types": ["node"],
 
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+
     "sourceMap": true,
     "declaration": true,
     "declarationMap": true,
@@ -16,12 +19,11 @@
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
 
-    // "verbatimModuleSyntax": true,
     "isolatedModules": true,
     "moduleDetection": "force",
 
     "skipLibCheck": true
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "src/**/*.d.ts"],
   "exclude": ["node_modules", "dist"]
 }
