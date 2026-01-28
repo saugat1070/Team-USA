@@ -9,6 +9,7 @@ import 'screens/home/home_page.dart';
 import 'pages/activity_page.dart';
 import 'screens/profile/user_profile.dart';
 import 'services/auth_service.dart';
+import 'widgets/auth_guard.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,17 +28,19 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      // home: const HomePage(),
       home: const AnimatedSplashScreen(),
 
       routes: {
+        // Public routes (no auth required)
         '/onboarding': (context) => const SplashScreen(),
         '/login': (context) => const LoginScreen(),
         '/signup': (context) => const SignUpScreen(),
-        '/home': (context) => const HomePage(),
-        '/map': (context) => const MapPage(),
-        '/activity': (context) => const ActivityPage(),
-        '/profile': (context) => const UserProfilePage(),
+
+        // Protected routes (auth required)
+        '/home': (context) => const AuthGuard(child: HomePage()),
+        '/map': (context) => const AuthGuard(child: MapPage()),
+        '/activity': (context) => const AuthGuard(child: ActivityPage()),
+        '/profile': (context) => const AuthGuard(child: UserProfilePage()),
       },
     );
   }
