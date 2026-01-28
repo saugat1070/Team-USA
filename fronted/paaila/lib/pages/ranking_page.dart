@@ -12,9 +12,15 @@ class RankingPage extends StatefulWidget {
 
 class _RankingPageState extends State<RankingPage> {
   static const Color _bgColor = Color(0xFFF5F5F5);
+  static const Color _cardColor = Colors.white;
   static const Color _primaryGreen = Color(0xFF00A86B);
+  static const Color _primaryGreenLight = Color(0xFFE8F5E9);
+  static const Color _fireOrange = Color(0xFFFF7043);
   static const Color _textDark = Color(0xFF1F2937);
   static const Color _textMuted = Color(0xFF6B7280);
+  static const Color _goldColor = Color(0xFFFFD700);
+  static const Color _silverColor = Color(0xFFB8C5D0);
+  static const Color _bronzeColor = Color(0xFFCD7F32);
 
   late Future<List<Runner>> _rankingsFuture;
   final String _roomId = '6978b3eb48c5b7d8b56577fb';
@@ -42,46 +48,35 @@ class _RankingPageState extends State<RankingPage> {
                 child: Column(
                   children: [
                     // Top Section (Icon + Title)
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 20),
                     Container(
-                      width: 64,
-                      height: 64,
-                      decoration: const BoxDecoration(
-                        color: Colors.orange,
+                      width: 72,
+                      height: 72,
+                      decoration: BoxDecoration(
+                        color: _fireOrange.withOpacity(0.12),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
-                        Icons.emoji_events_outlined,
-                        color: Colors.white,
-                        size: 32,
+                        Icons.emoji_events_rounded,
+                        color: _fireOrange,
+                        size: 36,
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
                     const Text(
-                      'Rankings',
+                      'Leaderboard',
                       style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
                         color: _textDark,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
                     const Text(
-                      'Compete with runners across Nepal',
-                      style: TextStyle(fontSize: 12, color: _textMuted),
+                      'Compete with runners across Kaski',
+                      style: TextStyle(fontSize: 13, color: _textMuted),
                     ),
-                    const SizedBox(height: 24),
-
-                    // Period Toggle
-                    Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 24),
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade200,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 28),
 
                     // Dynamic Content
                     FutureBuilder<List<Runner>>(
@@ -105,18 +100,26 @@ class _RankingPageState extends State<RankingPage> {
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Icon(
-                                  Icons.error_outline,
-                                  color: Colors.red,
-                                  size: 40,
+                                Container(
+                                  width: 56,
+                                  height: 56,
+                                  decoration: BoxDecoration(
+                                    color: Colors.red.withOpacity(0.1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.error_outline_rounded,
+                                    color: Colors.red,
+                                    size: 28,
+                                  ),
                                 ),
                                 const SizedBox(height: 16),
-                                Text(
+                                const Text(
                                   'Failed to load rankings',
                                   style: TextStyle(
-                                    color: Colors.grey.shade600,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
+                                    color: _textDark,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                                 const SizedBox(height: 8),
@@ -127,23 +130,34 @@ class _RankingPageState extends State<RankingPage> {
                                   child: Text(
                                     snapshot.error.toString(),
                                     textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      color: Colors.grey.shade500,
+                                    style: const TextStyle(
+                                      color: _textMuted,
                                       fontSize: 12,
                                     ),
                                   ),
                                 ),
-                                const SizedBox(height: 16),
+                                const SizedBox(height: 20),
                                 ElevatedButton.icon(
                                   onPressed: () {
                                     setState(() {
                                       _rankingsFuture = _fetchRankings();
                                     });
                                   },
-                                  icon: const Icon(Icons.refresh),
+                                  icon: const Icon(
+                                    Icons.refresh_rounded,
+                                    size: 18,
+                                  ),
                                   label: const Text('Retry'),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: _primaryGreen,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 24,
+                                      vertical: 12,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -153,18 +167,46 @@ class _RankingPageState extends State<RankingPage> {
 
                         final runners = snapshot.data ?? [];
                         if (runners.isEmpty) {
-                          return const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 40),
-                            child: Text('No rankings available'),
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 40),
+                            child: Column(
+                              children: [
+                                Icon(
+                                  Icons.people_outline_rounded,
+                                  size: 48,
+                                  color: _textMuted.withOpacity(0.5),
+                                ),
+                                const SizedBox(height: 12),
+                                const Text(
+                                  'No rankings available',
+                                  style: TextStyle(
+                                    color: _textMuted,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
                           );
                         }
 
                         return Column(
                           children: [
                             // Podium
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
+                            Container(
+                              margin: const EdgeInsets.symmetric(
                                 horizontal: 16,
+                              ),
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: _cardColor,
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.04),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
                               ),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -174,28 +216,26 @@ class _RankingPageState extends State<RankingPage> {
                                   if (runners.length > 1)
                                     _PodiumItem(
                                       runner: runners[1],
-                                      height: 140,
-                                      color: const Color(0xFFCFD8DC),
+                                      height: 100,
+                                      color: _silverColor,
                                     ),
                                   if (runners.length > 1)
-                                    const SizedBox(width: 8),
+                                    const SizedBox(width: 12),
                                   // Rank 1
                                   _PodiumItem(
                                     runner: runners[0],
-                                    height: 170,
-                                    color: const Color(0xFFFFC107),
+                                    height: 130,
+                                    color: _goldColor,
                                     isFirst: true,
                                   ),
                                   if (runners.length > 2)
-                                    const SizedBox(width: 8),
+                                    const SizedBox(width: 12),
                                   // Rank 3
                                   if (runners.length > 2)
                                     _PodiumItem(
                                       runner: runners[2],
-                                      height: 120,
-                                      color: const Color(
-                                        0xFFCD7F32,
-                                      ).withOpacity(0.8),
+                                      height: 80,
+                                      color: _bronzeColor,
                                     ),
                                 ],
                               ),
@@ -207,16 +247,26 @@ class _RankingPageState extends State<RankingPage> {
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 20,
                               ),
-                              child: const Align(
-                                alignment: Alignment.centerLeft,
-                                child: Text(
-                                  'All Rankings',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF1D1617),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text(
+                                    'All Runners',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: _textDark,
+                                    ),
                                   ),
-                                ),
+                                  Text(
+                                    '${runners.length} participants',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: _textMuted,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                             const SizedBox(height: 12),
@@ -255,6 +305,10 @@ class _RankingPageState extends State<RankingPage> {
 // -----------------------------------------------------------------------------
 
 class _PodiumItem extends StatelessWidget {
+  static const Color _primaryGreen = Color(0xFF00A86B);
+  static const Color _textDark = Color(0xFF1F2937);
+  static const Color _textMuted = Color(0xFF6B7280);
+
   final Runner runner;
   final double height;
   final Color color;
@@ -272,105 +326,84 @@ class _PodiumItem extends StatelessWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        // Avatar stack (Avatar + Crown/Rank Badge)
-        SizedBox(
-          height: isFirst ? 70 : 60,
-          width: isFirst ? 70 : 60,
-          child: Stack(
-            clipBehavior: Clip.none,
-            alignment: Alignment.center,
-            children: [
-              // User Avatar Placeholder or Image
-              // For simplicity using a colored icon or asset would be best.
-              // Replicating the 'person running' illustration is hard without assets.
-              // Will use simple Icons for now.
-              runner.name == 'You'
-                  ? const CircleAvatar(
-                      radius: 30,
-                      backgroundColor: Color(0xFF4A148C), // Purple for 'You'
-                      child: Icon(Icons.person, color: Colors.white, size: 30),
-                    )
-                  : const CircleAvatar(
-                      radius: 30,
-                      backgroundColor: Colors.white,
-                      child: Icon(
-                        Icons.directions_run,
-                        color: Colors.orange,
-                        size: 30,
-                      ),
-                    ),
-
-              // Crown for #1
-              if (isFirst)
-                Positioned(
-                  top: -24,
-                  child: Transform.rotate(
-                    angle: -0.2,
-                    child: const Icon(
-                      Icons.star,
-                      color: Colors.orange,
-                      size: 24,
-                    ),
-                  ),
-                ),
-
-              // Rank Badge
-              Positioned(
-                bottom: -10,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isFirst
-                        ? const Color(0xFFFFC107)
-                        : const Color(0xFF90A4AE),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    isFirst ? '♛ #${runner.rank}' : '#${runner.rank}',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        // Name & Stat
-        Text(
-          runner.name,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-        ),
-        Text(
-          runner.distance,
-          style: const TextStyle(color: Colors.grey, fontSize: 11),
+        // Simple trophy icon (no emoji)
+        Icon(
+          Icons.emoji_events_outlined,
+          color: color.withOpacity(0.9),
+          size: isFirst ? 28 : 22,
         ),
         const SizedBox(height: 8),
 
-        // Podium Block
+        // Avatar
         Container(
-          width: isFirst ? 100 : 85,
-          height: height,
+          width: isFirst ? 64 : 52,
+          height: isFirst ? 64 : 52,
           decoration: BoxDecoration(
-            color: color,
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(8),
-              topRight: Radius.circular(8),
-            ),
+            shape: BoxShape.circle,
+            color: color.withOpacity(0.2),
+            border: Border.all(color: color, width: isFirst ? 3 : 2),
           ),
           child: Center(
             child: Icon(
-              Icons.emoji_events_outlined, // Trophy/Medal icon on the block
-              color: Colors.black.withOpacity(0.15),
-              size: 40,
+              runner.name == 'You'
+                  ? Icons.person_rounded
+                  : Icons.directions_run_rounded,
+              color: _primaryGreen,
+              size: isFirst ? 30 : 24,
             ),
+          ),
+        ),
+        const SizedBox(height: 10),
+
+        // Name
+        SizedBox(
+          width: 80,
+          child: Text(
+            runner.name,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: isFirst ? 14 : 12,
+              color: _textDark,
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          runner.distance,
+          style: const TextStyle(color: _textMuted, fontSize: 11),
+        ),
+        const SizedBox(height: 10),
+
+        // Podium Block
+        Container(
+          width: isFirst ? 90 : 75,
+          height: height,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [color, color.withOpacity(0.7)],
+            ),
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(12),
+              topRight: Radius.circular(12),
+            ),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                '#${runner.rank}',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: isFirst ? 22 : 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -379,65 +412,88 @@ class _PodiumItem extends StatelessWidget {
 }
 
 class _RankingListItem extends StatelessWidget {
+  static const Color _primaryGreen = Color(0xFF00A86B);
+  static const Color _primaryGreenLight = Color(0xFFE8F5E9);
+  static const Color _textDark = Color(0xFF1F2937);
+  static const Color _textMuted = Color(0xFF6B7280);
+  static const Color _goldColor = Color(0xFFFFD700);
+  static const Color _silverColor = Color(0xFFB8C5D0);
+  static const Color _bronzeColor = Color(0xFFCD7F32);
+
   final Runner runner;
 
   const _RankingListItem({required this.runner});
 
   @override
   Widget build(BuildContext context) {
-    // Define a special style for top 3
     final isTop3 = runner.rank <= 3;
-    Color? badgeColor;
-    if (runner.rank == 1) badgeColor = const Color(0xFFFFC107);
-    if (runner.rank == 2) badgeColor = const Color(0xFFCFD8DC);
-    if (runner.rank == 3) badgeColor = const Color(0xFFCD7F32);
+    Color badgeColor;
+
+    if (runner.rank == 1) {
+      badgeColor = _goldColor;
+    } else if (runner.rank == 2) {
+      badgeColor = _silverColor;
+    } else if (runner.rank == 3) {
+      badgeColor = _bronzeColor;
+    } else {
+      badgeColor = const Color(0xFFE5E7EB);
+    }
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
+        border: isTop3
+            ? Border.all(color: badgeColor.withOpacity(0.3), width: 1.5)
+            : null,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.03),
             blurRadius: 8,
-            offset: const Offset(0, 4),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Row(
         children: [
-          // Rank Icon/Number
-          SizedBox(
-            width: 32,
-            child: isTop3
-                ? Icon(Icons.emoji_events, color: badgeColor, size: 28)
-                : Icon(
-                    Icons.military_tech_outlined,
-                    color: Colors.grey.shade400,
-                    size: 28,
-                  ),
+          // Rank Number
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: isTop3
+                  ? badgeColor.withOpacity(0.15)
+                  : const Color(0xFFF5F5F5),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Center(
+              child: Text(
+                '#${runner.rank}',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                  color: isTop3 ? badgeColor : _textMuted,
+                ),
+              ),
+            ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 12),
 
           // Avatar
           Container(
-            padding: const EdgeInsets.all(2),
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: isTop3
-                  ? Border.all(color: badgeColor!, width: 2)
-                  : Border.all(color: Colors.transparent),
+              color: _primaryGreenLight,
+              border: isTop3 ? Border.all(color: badgeColor, width: 2) : null,
             ),
-            child: CircleAvatar(
-              radius: 18,
-              backgroundColor: Colors.grey.shade100,
-              child: Icon(
-                Icons.directions_run,
-                size: 20,
-                color: isTop3 ? Colors.orange : Colors.grey,
-              ),
+            child: Icon(
+              Icons.directions_run_rounded,
+              size: 20,
+              color: _primaryGreen,
             ),
           ),
           const SizedBox(width: 12),
@@ -450,23 +506,26 @@ class _RankingListItem extends StatelessWidget {
                 Text(
                   runner.name,
                   style: const TextStyle(
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w600,
                     fontSize: 14,
-                    color: Color(0xFF1D1617),
+                    color: _textDark,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 4),
                 Row(
                   children: [
-                    const Icon(
-                      Icons.place_outlined,
-                      size: 12,
-                      color: Colors.grey,
-                    ),
+                    Icon(Icons.flag_rounded, size: 12, color: _primaryGreen),
                     const SizedBox(width: 4),
                     Text(
                       '${runner.territories} territories',
-                      style: const TextStyle(fontSize: 11, color: Colors.grey),
+                      style: const TextStyle(fontSize: 11, color: _textMuted),
+                    ),
+                    const SizedBox(width: 12),
+                    Icon(Icons.straighten_rounded, size: 12, color: _textMuted),
+                    const SizedBox(width: 4),
+                    Text(
+                      runner.distance,
+                      style: const TextStyle(fontSize: 11, color: _textMuted),
                     ),
                   ],
                 ),
@@ -474,39 +533,22 @@ class _RankingListItem extends StatelessWidget {
             ),
           ),
 
-          // Stat Badge
-          if (isTop3)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: badgeColor,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                'Top ${runner.rank}',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            )
-          else
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                'Top ${runner.rank}', // Or just 'Top 10' logic
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                ),
+          // Rank Badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: isTop3 ? badgeColor : const Color(0xFFF5F5F5),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              isTop3 ? 'Top ${runner.rank}' : '#${runner.rank}',
+              style: TextStyle(
+                color: isTop3 ? Colors.white : _textMuted,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
               ),
             ),
+          ),
         ],
       ),
     );
