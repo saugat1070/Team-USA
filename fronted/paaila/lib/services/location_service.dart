@@ -30,7 +30,8 @@ class LocationService {
       }
 
       final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.best,
+        desiredAccuracy:
+            LocationAccuracy.high, // Changed from 'best' for faster response
       );
 
       print("Location here: ${position}");
@@ -38,6 +39,21 @@ class LocationService {
       return position;
     } catch (e) {
       print('Error getting location: $e');
+      return null;
+    }
+  }
+
+  /// Get last known position (instant, no GPS wait)
+  static Future<Position?> getLastKnownLocation() async {
+    try {
+      final hasPermission = await isLocationPermissionGranted();
+      if (!hasPermission) return null;
+
+      final position = await Geolocator.getLastKnownPosition();
+      print("Last known location: $position");
+      return position;
+    } catch (e) {
+      print('Error getting last known location: $e');
       return null;
     }
   }

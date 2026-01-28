@@ -66,9 +66,19 @@ class LocationNotifier extends StateNotifier<LocationState> {
         return;
       }
 
-      final position = await LocationService.getCurrentLocation();
+      // Try to get last known position first (instant) for faster map render
+      final lastKnown = await LocationService.getLastKnownLocation();
+      if (lastKnown != null) {
+        state = state.copyWith(
+          position: lastKnown,
+          isTracking: true, // Still tracking to get accurate position
+          permissionGranted: true,
+          error: null,
+        );
+      }
 
-      
+      // Now get accurate position (may take a few seconds)
+      final position = await LocationService.getCurrentLocation();
 
       if (position != null) {
         state = state.copyWith(
@@ -76,20 +86,12 @@ class LocationNotifier extends StateNotifier<LocationState> {
           isTracking: false,
           permissionGranted: true,
           error: null,
-          
         );
 
         // Send location via socket (server identifies user from JWT in socket connection)
-        socketService.sendLocation(
-          position.latitude,
-          position.longitude,
-        );
+        socketService.sendLocation(position.latitude, position.longitude);
         // Send location via POST API
-        LocationApiService.sendLocation(
-          position.latitude,
-          position.longitude,
-        );
-        
+        LocationApiService.sendLocation(position.latitude, position.longitude);
       } else {
         state = state.copyWith(
           isTracking: false,
@@ -98,7 +100,10 @@ class LocationNotifier extends StateNotifier<LocationState> {
         );
       }
     } catch (e) {
-      state = state.copyWith(isTracking: false, error: 'Error: ${e.toString()}');
+      state = state.copyWith(
+        isTracking: false,
+        error: 'Error: ${e.toString()}',
+      );
     }
   }
 
@@ -130,15 +135,9 @@ class LocationNotifier extends StateNotifier<LocationState> {
         );
 
         // Send location via socket (server identifies user from JWT in socket connection)
-        socketService.sendLocation(
-          position.latitude,
-          position.longitude,
-        );
+        socketService.sendLocation(position.latitude, position.longitude);
         // Send location via POST API
-        LocationApiService.sendLocation(
-          position.latitude,
-          position.longitude,
-        );
+        LocationApiService.sendLocation(position.latitude, position.longitude);
       } else {
         state = state.copyWith(
           isTracking: false,
@@ -146,7 +145,10 @@ class LocationNotifier extends StateNotifier<LocationState> {
         );
       }
     } catch (e) {
-      state = state.copyWith(isTracking: false, error: 'Error: ${e.toString()}');
+      state = state.copyWith(
+        isTracking: false,
+        error: 'Error: ${e.toString()}',
+      );
     }
   }
 

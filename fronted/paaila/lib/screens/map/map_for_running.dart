@@ -52,10 +52,39 @@ class _MapForRunningPageState extends ConsumerState<MapForRunningPage> {
     });
   }
 
+  /// Track if we've already centered on user's location
+  bool _hasCenteredOnUser = false;
+
+  /// Fallback center if location is not yet available (Kathmandu)
+  static const LatLng _kDefaultCenter = LatLng(27.7172, 85.3240);
+
   @override
   Widget build(BuildContext context) {
     final locationState = ref.watch(locationProvider);
     final locationStream = ref.watch(locationUpdatesProvider);
+
+    // Use position if available, otherwise fallback to default
+    final LatLng mapCenter = (locationState.position != null)
+        ? LatLng(
+            locationState.position!.latitude,
+            locationState.position!.longitude,
+          )
+        : _kDefaultCenter;
+
+    // Auto-center on user when position becomes available
+    if (locationState.position != null &&
+        !_hasCenteredOnUser &&
+        _mapController != null) {
+      _hasCenteredOnUser = true;
+      _mapController!.animateCamera(
+        CameraUpdate.newLatLng(
+          LatLng(
+            locationState.position!.latitude,
+            locationState.position!.longitude,
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -82,86 +111,123 @@ class _MapForRunningPageState extends ConsumerState<MapForRunningPage> {
           ],
         ),
       ),
-      body: locationState.isTracking
-          ? const Center(child: CircularProgressIndicator())
-          : locationState.position == null
-          ? const Center(child: Text('Location not available'))
-          : Column(
+      body: Column(
+        children: [
+          /// 🗺 Google Map - renders immediately with fallback position
+          Expanded(
+            child: Container(
+              margin: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Stack(
+                  children: [
+                    GoogleMap(
+                      initialCameraPosition: CameraPosition(
+                        target:
+                            mapCenter, // Uses fallback if position not available
+                        zoom: 17,
+                      ),
+                      markers: _markers,
+                      myLocationEnabled: true,
+                      zoomControlsEnabled: false,
+                      webCameraControlEnabled: false,
+                      myLocationButtonEnabled: false,
+                      polylines: _polylines,
+                      onMapCreated: (controller) {
+                        _mapController = controller;
+                        // Animate to actual position once available
+                        if (locationState.position != null) {
+                          controller.animateCamera(
+                            CameraUpdate.newLatLng(
+                              LatLng(
+                                locationState.position!.latitude,
+                                locationState.position!.longitude,
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                    // Recenter button at bottom right
+                    Positioned(
+                      bottom: 16,
+                      right: 16,
+                      child: FloatingActionButton.small(
+                        heroTag: 'recenter_btn',
+                        backgroundColor: Colors.white,
+                        onPressed: _recenterMap,
+                        child: const Icon(
+                          Icons.my_location,
+                          color: Color(0xFF00A86B),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          /// ▶️ Controls
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                /// 🗺 Google Map
                 Expanded(
-                  child: Container(
-                    margin: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.grey.shade300),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: GoogleMap(
-                        initialCameraPosition: CameraPosition(
-                          target: LatLng(
-                            locationState.position!.latitude,
-                            locationState.position!.longitude,
-                          ),
-                          zoom: 17,
-                        ),
-                        markers: _markers,
-                        myLocationEnabled: true,
-                        myLocationButtonEnabled: true,
-                        polylines: _polylines,
-                        onMapCreated: (controller) {
-                          _mapController = controller;
-                        },
-                      ),
-                    ),
+                  child: ElevatedButton(
+                    onPressed: _isTracking ? null : _startRun,
+                    child: const Text('Start'),
                   ),
                 ),
-
-                /// ▶️ Controls
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: _isTracking ? _stopRun : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.redAccent,
+                    ),
+                    child: const Text('Stop'),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: _isTracking ? null : _startRun,
-                          child: const Text('Start'),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: _isTracking ? _stopRun : null,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.redAccent,
-                          ),
-                          child: const Text('Stop'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                /// 📊 Stats Panel
-                locationStream.when(
-                  data: (position) {
-                    if (_isTracking) {
-                      _handleNewPosition(position);
-                    }
-
-                    return _buildStats();
-                  },
-                  loading: () => _buildStats(),
-                  error: (e, _) => Text('Error: $e'),
                 ),
               ],
             ),
+          ),
+
+          /// 📊 Stats Panel
+          locationStream.when(
+            data: (position) {
+              if (_isTracking) {
+                _handleNewPosition(position);
+              }
+
+              return _buildStats();
+            },
+            loading: () => _buildStats(),
+            error: (e, _) => Text('Error: $e'),
+          ),
+        ],
+      ),
     );
+  }
+
+  /// Recenter map to current location
+  void _recenterMap() {
+    final locationState = ref.read(locationProvider);
+    if (locationState.position != null && _mapController != null) {
+      _mapController!.animateCamera(
+        CameraUpdate.newLatLng(
+          LatLng(
+            locationState.position!.latitude,
+            locationState.position!.longitude,
+          ),
+        ),
+      );
+    }
   }
 
   /// Handle live location updates
@@ -436,6 +502,11 @@ class _MapForRunningPageState extends ConsumerState<MapForRunningPage> {
       // Push activity to Redis with the chosen activity type
       if (_redisActivity != null) {
         _pushRedis(_redisActivity!);
+      }
+
+      // Navigate back to home page after stopping
+      if (mounted) {
+        Navigator.of(context).pushReplacementNamed('/home');
       }
     }
   }
