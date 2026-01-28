@@ -1,5 +1,5 @@
-process.loadEnvFile(".env")
-
+import dotenv from "dotenv";
+dotenv.config();
 interface EnvConfig {
     portNumber:number;
     dbUrl : string;
