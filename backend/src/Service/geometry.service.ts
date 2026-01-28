@@ -28,8 +28,8 @@ export const isPolygonClosedWithinMeters = (
   if (!Array.isArray(ring) || ring.length < 3) return false;
   const first = ring[0]!;
   const last = ring[ring.length - 1]!;
-  const dKm = distance(point(first), point(last), { units: "kilometers" });
-  return dKm * 1000 <= maxDistanceM;
+  const dM = distance(point(first), point(last), { units: "meters" });
+  return dM <= maxDistanceM;
 };
 
 export const calculateTotalDistanceMeters = (coords: Coordinate[]): number => {
@@ -38,14 +38,43 @@ export const calculateTotalDistanceMeters = (coords: Coordinate[]): number => {
   for (let i = 1; i < coords.length; i += 1) {
     const prev = coords[i - 1]!;
     const curr = coords[i]!;
-    const dKm = distance(point(prev), point(curr), { units: "kilometers" });
-    totalM += dKm * 1000;
+    const dM = distance(point(prev), point(curr), { units: "meters" });
+    totalM += dM;
   }
   return totalM;
+};
+
+export const cleanDuplicates = (coords: Coordinate[], eps = 0): Coordinate[] => {
+  const out: Coordinate[] = [];
+  for (const c of coords) {
+    const last = out[out.length - 1];
+    if (!last) out.push(c);
+    else {
+      const same = eps === 0
+        ? (last[0] === c[0] && last[1] === c[1])
+        : (Math.abs(last[0] - c[0]) <= eps && Math.abs(last[1] - c[1]) <= eps);
+      if (!same) out.push(c);
+    }
+  }
+  return out;
+};
+
+export const isValidLineString = (coords: Coordinate[]): boolean =>
+  Array.isArray(coords) && coords.length >= 2;
+
+export const isValidPolygon = (ring: Coordinate[]): boolean => {
+  // minimum 4 points with closure (first == last)
+  if (!Array.isArray(ring) || ring.length < 4) return false;
+  const a = ring[0]!;
+  const b = ring[ring.length - 1]!;
+  return a[0] === b[0] && a[1] === b[1];
 };
 
 export default {
   calculatePolygonAreaMeters2,
   isPolygonClosedWithinMeters,
   calculateTotalDistanceMeters,
+  cleanDuplicates,
+  isValidLineString,
+  isValidPolygon,
 };
