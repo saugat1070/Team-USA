@@ -6,7 +6,8 @@ import bcrypt from "bcrypt";
 export const createUser = async(firstName:string,lastName:string,email:string,password:string)=>{
     const user = await UserModel.create({
         fullName : {
-            firstName,lastName
+            firstName:firstName,
+            lastName:lastName
         },
         email : email,
         password : password
