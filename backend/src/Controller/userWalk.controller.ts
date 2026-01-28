@@ -122,11 +122,8 @@ export const getUserTeritory = async (req: IRequest, res: Response) => {
 
 
 export const strikeMaintaince = async (req: IRequest, res: Response) => {  
-    const { userId, roomId, reason, points, issuedBy } = req.body;
-    if(!userId || !roomId){
-        return res.status(400).json({ message: "userId and roomId are required" });
-    }
-    const strike = await StrikeMaintenance.findOne({userId,roomId}).select("points maxPoint");
+    const userId = req.user?._id;
+    const strike = await StrikeMaintenance.findOne({userId}).select("points maxPoint");
     console.log(Date.now())
     return res.status(200).json({ok:true,strike})
 

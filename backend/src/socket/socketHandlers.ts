@@ -3,7 +3,17 @@ import Room from "../Models/room.model.js";
 import RoomService from "../Service/room.service.js";
 import redisClient from "../utils/redis.js";
 import UserLocation from "../Models/userLocation.model.js";
-import { calculatePolygonAreaMeters2, calculateTotalDistanceMeters, isPolygonClosedWithinMeters } from "../Service/geometry.service.js";
+import StrikeMaintenanceModel from "../Models/strikeMaintenance.model.js";
+import UserModel from "../Models/auth.model.js";
+import { calculateReward } from "../Service/reward.service.js";
+import {
+  calculatePolygonAreaMeters2,
+  calculateTotalDistanceMeters,
+  cleanDuplicates,
+  isPolygonClosedWithinMeters,
+  isValidLineString,
+  isValidPolygon,
+} from "../Service/geometry.service.js";
 
 interface CustomSocket extends Socket {
   userId?: string;
@@ -155,27 +165,42 @@ const setupSocketHandlers = (io: Server) => {
         const coordinates: [number, number][] = rawPoints.map(
           (p): [number, number] => [p.lng, p.lat],
         );
+        const cleanedCoordinates = cleanDuplicates(coordinates);
         const startedAt = new Date(rawPoints[0].ts);
         const endedAt = new Date(rawPoints[rawPoints.length - 1].ts);
         const durationSec = Math.max(0, Math.floor((endedAt.getTime() - startedAt.getTime()) / 1000));
 
-        const status = rawPoints.length < 2 ? "invalid" : "completed";
+        const isLineValid = isValidLineString(cleanedCoordinates);
+        const status = isLineValid ? "completed" : "invalid";
 
-        const isClosed = isPolygonClosedWithinMeters(coordinates, 30);
-        const polygonCoords = isClosed ? [coordinates] : [];
-        const areaM2 = isClosed && polygonCoords.length > 4 ? calculatePolygonAreaMeters2(polygonCoords) : 0;
-        const distanceM = calculateTotalDistanceMeters(coordinates);
+        const isClosed = isPolygonClosedWithinMeters(cleanedCoordinates, 30);
+        const ring = (isClosed && cleanedCoordinates.length > 0)
+          ? (() => {
+            const first = cleanedCoordinates[0]!;
+            const last = cleanedCoordinates[cleanedCoordinates.length - 1]!;
+            const alreadyClosed = first[0] === last[0] && first[1] === last[1];
+            return alreadyClosed ? cleanedCoordinates : [...cleanedCoordinates, first];
+          })()
+          : [];
+        const polygonCoords = ring.length > 0 ? [ring] : [];
+        const isPolygonValid = polygonCoords.length > 0 && isValidPolygon(polygonCoords[0]!);
+        const areaM2 = isPolygonValid ? calculatePolygonAreaMeters2(polygonCoords) : 0;
+        const distanceM = isLineValid ? calculateTotalDistanceMeters(cleanedCoordinates) : 0;
         const avgSpeedMps = durationSec > 0 ? distanceM / durationSec : 0;
 
         const locationDoc = await UserLocation.create({
-          userId: socket.userId,
+          userId: socket.user._id,
           roomId: socket.roomId,
           activityType: activityType ?? "walking",
           startedAt,
           endedAt,
           durationSec,
-          track: { type: "LineString", coordinates },
-          polygon: isClosed && coordinates.length > 4 ? { type: "Polygon", coordinates: polygonCoords } : { type: "Polygon", coordinates: [[]] },
+          track: isLineValid
+            ? { type: "LineString", coordinates: cleanedCoordinates }
+            : { type: "LineString", coordinates: [] },
+          polygon: isPolygonValid
+            ? { type: "Polygon", coordinates: polygonCoords }
+            : { type: "Polygon", coordinates: [] },
           areaM2,
           metrics: {
             distanceM : distanceM >= 10 ? distanceM : 0,
@@ -189,8 +214,47 @@ const setupSocketHandlers = (io: Server) => {
             avgAccuracyM: 0,
           },
           status,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         });
 
+        if (status === "completed" && socket.userId && socket.roomId) {
+          const todayStart = new Date();
+          todayStart.setHours(0, 0, 0, 0);
+          const todayEnd = new Date();
+          todayEnd.setHours(23, 59, 59, 999);
+
+          const alreadyRecordedToday = await StrikeMaintenanceModel.findOne({
+            userId: socket.userId,
+            roomId: socket.roomId,
+            updatedAt: { $gte: todayStart, $lte: todayEnd },
+          }).select("_id");
+
+          if (!alreadyRecordedToday) {
+            await StrikeMaintenanceModel.findOneAndUpdate(
+              { userId: socket.userId, roomId: socket.roomId },
+              {
+                $inc: { points: 1, maxPoint: 1 },
+                $setOnInsert: {
+                  reason: "walk completed",
+                  status: "OPEN",
+                },
+              },
+              { upsert: true, new: true },
+            );
+          }
+
+          const { rewardPoints } = await calculateReward(socket.userId, distanceM);
+
+          if (rewardPoints > 0) {
+            await UserModel.findByIdAndUpdate(
+              socket.userId,
+              { $inc: { rewardPoints } },
+              { new: true },
+            );
+          }
+        }
+        
         socket.emit("walk:result", {
           ok: true,
           locationId: locationDoc._id,
