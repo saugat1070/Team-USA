@@ -68,6 +68,10 @@ class SocketService {
     socket.emit("join-room", {"roomId": roomId});
   }
 
+  void pushRedis(String activityType) {
+    socket.emit("walk:end", {activityType: "Walking"});
+  }
+
   void disconnect() {
     socket.disconnect();
     _connected = false;

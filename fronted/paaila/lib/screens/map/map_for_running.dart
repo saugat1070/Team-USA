@@ -11,6 +11,8 @@ import '../../providers/location_provider.dart';
 import '../../repositories/run_repository.dart';
 import '../../providers/socket_provider.dart';
 
+import '../../services/socket_service.dart';
+
 class MapForRunningPage extends ConsumerStatefulWidget {
   const MapForRunningPage({super.key});
 
@@ -355,7 +357,14 @@ class _MapForRunningPageState extends ConsumerState<MapForRunningPage> {
         _savedRuns.add(run);
       });
       _rebuildSavedRunPolylines();
+
+      // Push activity to Redis
+      _pushRedis('Walking');
     }
+  }
+
+  void _pushRedis(String activityType) {
+    ref.read(socketServiceProvider).pushRedis(activityType);
   }
 
   Future<void> _loadSavedRuns() async {
