@@ -38,7 +38,8 @@ class _MapForRunningPageState extends ConsumerState<MapForRunningPage> {
   bool _isTracking = false;
   Duration _lastRunDuration = Duration.zero;
   double _lastRunDistance = 0.0;
-  double _lastRunPace = 0.0; // min/km
+  double _lastRunPace = 0.0; // km/min
+  String? _redisActivity; // Store the activity type (Walking or Running)
 
   @override
   void initState() {
@@ -253,7 +254,7 @@ class _MapForRunningPageState extends ConsumerState<MapForRunningPage> {
     final pace = () {
       if (distanceKm <= 0 || duration.inSeconds == 0) return 0.0;
       final minutes = duration.inSeconds / 60.0;
-      return minutes / distanceKm; // min/km
+      return distanceKm / minutes; // km/min
     }();
 
     if (!isRunning) {
@@ -274,8 +275,8 @@ class _MapForRunningPageState extends ConsumerState<MapForRunningPage> {
           _statItem(
             'Pace',
             (pace == 0.0 && !_isTracking && _lastRunPace > 0)
-                ? '${_lastRunPace.toStringAsFixed(2)} min/km'
-                : (pace == 0.0 ? '-' : '${pace.toStringAsFixed(2)} min/km'),
+                ? '${_lastRunPace.toStringAsFixed(2)} km/min'
+                : (pace == 0.0 ? '-' : '${pace.toStringAsFixed(2)} km/min'),
           ),
         ],
       ),
@@ -295,8 +296,82 @@ class _MapForRunningPageState extends ConsumerState<MapForRunningPage> {
     );
   }
 
-  void _startRun() {
+  void _startRun() async {
+    // Show dialog to choose activity type
+    final activityType = await showDialog<String>(
+      context: context,
+      barrierDismissible: false, // User must choose
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Choose Activity'),
+          content: const Text('Are you planning to walk or cycle?'),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          actions: [
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () => Navigator.of(context).pop('Walking'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF00A86B),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.directions_walk, size: 20, color: Colors.white),
+                    SizedBox(width: 8),
+                    Text(
+                      'Walk',
+                      style: TextStyle(fontSize: 16, color: Colors.white),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () => Navigator.of(context).pop('Running'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF00A86B),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.directions_bike, size: 20, color: Colors.white),
+                    SizedBox(width: 8),
+                    Text(
+                      'Cycle',
+                      style: TextStyle(fontSize: 16, color: Colors.white),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    // If user dismissed dialog or didn't choose, don't start
+    if (activityType == null) return;
+
     setState(() {
+      _redisActivity = activityType; // Store the choice
       _isTracking = true;
       _routePoints.clear();
       _polylines.clear();
@@ -330,7 +405,7 @@ class _MapForRunningPageState extends ConsumerState<MapForRunningPage> {
       final distanceKm = _lastRunDistance / 1000.0;
       if (distanceKm > 0 && _lastRunDuration.inSeconds > 0) {
         final minutes = _lastRunDuration.inSeconds / 60.0;
-        _lastRunPace = minutes / distanceKm;
+        _lastRunPace = distanceKm / minutes;
       } else {
         _lastRunPace = 0.0;
       }
@@ -358,8 +433,10 @@ class _MapForRunningPageState extends ConsumerState<MapForRunningPage> {
       });
       _rebuildSavedRunPolylines();
 
-      // Push activity to Redis
-      _pushRedis('Walking');
+      // Push activity to Redis with the chosen activity type
+      if (_redisActivity != null) {
+        _pushRedis(_redisActivity!);
+      }
     }
   }
 
@@ -434,7 +511,7 @@ class _MapForRunningPageState extends ConsumerState<MapForRunningPage> {
                   ),
                   _statItem(
                     'Pace',
-                    pace == null ? '-' : '${pace.toStringAsFixed(2)} min/km',
+                    pace == null ? '-' : '${pace.toStringAsFixed(2)} km/min',
                   ),
                 ],
               ),
