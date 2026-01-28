@@ -69,6 +69,72 @@ class _MapPageState extends ConsumerState<MapPage> {
     } catch (e) {
       debugPrint('Error loading districts: $e');
     }
+
+    // Load trails
+    await _loadTrails();
+  }
+
+  Future<void> _loadTrails() async {
+    try {
+      final String jsonString = await rootBundle.loadString(
+        'assets/data/trails.json',
+      );
+      final Map<String, dynamic> jsonResponse = json.decode(jsonString);
+      final List<dynamic> features = jsonResponse['features'] ?? [];
+
+      final Set<Polygon> trailPolygons = {};
+      final List<Color> colors = [
+        const Color.fromARGB(200, 156, 39, 176), // Purple
+        const Color.fromARGB(200, 255, 193, 7), // Yellow
+        const Color.fromARGB(200, 76, 175, 80), // Green
+        const Color.fromARGB(200, 33, 150, 243), // Blue
+        const Color.fromARGB(200, 255, 87, 34), // Orange
+        const Color.fromARGB(200, 0, 137, 249), // Light Blue
+      ];
+
+      for (int i = 0; i < features.length; i++) {
+        var feature = features[i];
+        if (feature['geometry']['type'] == 'Polygon') {
+          final List<dynamic> coordinates =
+              feature['geometry']['coordinates'][0];
+          final List<LatLng> points = coordinates.map((coord) {
+            return LatLng(
+              (coord[1] as num).toDouble(),
+              (coord[0] as num).toDouble(),
+            );
+          }).toList();
+
+          final color = colors[i % colors.length];
+
+          trailPolygons.add(
+            Polygon(
+              polygonId: PolygonId(
+                feature['properties']['shapeName'] ?? 'unknown_trail',
+              ),
+              points: points,
+              strokeWidth: 3,
+              strokeColor: color,
+              fillColor: color.withOpacity(0.4),
+              onTap: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      '${feature['properties']['shapeName']} • ${feature['properties']['activityType']}',
+                    ),
+                  ),
+                );
+              },
+            ),
+          );
+        }
+      }
+
+      setState(() {
+        _polygons.addAll(trailPolygons);
+      });
+    } catch (e) {
+      debugPrint('Error loading trails: $e');
+    }
   }
 
   @override

@@ -7,7 +7,7 @@ import mongoose from "mongoose";
 
 export const getLeaderboard = async (req: IRequest, res: Response) => {
     try {
-        const roomId = (req.user?.roomId || req.query.roomId) as string | undefined;
+        const roomId = (req.user?.roomId || req.params.roomId) as string | undefined;
         if (!roomId) {
             return res.status(400).json({ message: "roomId is required" });
         }
@@ -24,12 +24,42 @@ export const getLeaderboard = async (req: IRequest, res: Response) => {
             {
                 $group: {
                     _id: "$userId",
-                    totalDistanceM: { $sum: "$metrics.distanceM" },
-                    totalDurationSec: { $sum: "$durationSec" },
+                    totalDistanceM: { $sum: { $ifNull: ["$metrics.distanceM", 0] } },
+                    totalDurationSec: { $sum: { $ifNull: ["$durationSec", 0] } },
+                    totalAreaM2: { $sum: { $ifNull: ["$areaM2", 0] } },
+                    maxSpeedMps: { $max: { $ifNull: ["$metrics.maxSpeedMps", 0] } },
                     sessions: { $sum: 1 },
                 },
             },
-            { $sort: { totalDistanceM: -1 } },
+            {
+                $addFields: {
+                    avgSpeedMps: {
+                        $cond: [
+                            { $gt: ["$totalDurationSec", 0] },
+                            { $divide: ["$totalDistanceM", "$totalDurationSec"] },
+                            0,
+                        ],
+                    },
+                    paceSecPerKm: {
+                        $cond: [
+                            { $gt: ["$totalDistanceM", 0] },
+                            { $divide: ["$totalDurationSec", { $divide: ["$totalDistanceM", 1000] }] },
+                            0,
+                        ],
+                    },
+                },
+            },
+            {
+                $addFields: {
+                    score: {
+                        $add: [
+                            "$totalDistanceM",
+                            { $divide: ["$totalAreaM2", 10] },
+                        ],
+                    },
+                },
+            },
+            { $sort: { score: -1, totalDistanceM: -1, totalAreaM2: -1 } },
             {
                 $lookup: {
                     from: "users",
@@ -43,8 +73,13 @@ export const getLeaderboard = async (req: IRequest, res: Response) => {
                 $project: {
                     _id: 0,
                     userId: "$_id",
+                    score: 1,
                     totalDistanceM: 1,
                     totalDurationSec: 1,
+                    totalAreaM2: 1,
+                    avgSpeedMps: 1,
+                    maxSpeedMps: 1,
+                    paceSecPerKm: 1,
                     sessions: 1,
                     user: {
                         _id: "$user._id",

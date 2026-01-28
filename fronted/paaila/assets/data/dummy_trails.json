@@ -1,0 +1,161 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "shapeName": "WRC College",
+        "activityType": "Running",
+        "distance": 4.96,
+        "duration": 3118,
+        "areaCovered": 75.434
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [85.3245, 27.71],
+            [85.3265, 27.7095],
+            [85.328, 27.71],
+            [85.3285, 27.7115],
+            [85.327, 27.713],
+            [85.3255, 27.7125],
+            [85.324, 27.712],
+            [85.3235, 27.7105],
+            [85.3245, 27.71]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "shapeName": "Kathmandu University",
+        "activityType": "Cycling",
+        "distance": 8.5,
+        "duration": 3200,
+        "areaCovered": 52.3
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [85.332, 27.708],
+            [85.3335, 27.7075],
+            [85.335, 27.7085],
+            [85.3355, 27.7105],
+            [85.3345, 27.712],
+            [85.3325, 27.7125],
+            [85.331, 27.7115],
+            [85.3305, 27.7095],
+            [85.332, 27.708]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "shapeName": "Tribhuvan University",
+        "activityType": "Walking",
+        "distance": 3.5,
+        "duration": 1800,
+        "areaCovered": 38.6
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [85.315, 27.718],
+            [85.3162, 27.7175],
+            [85.3175, 27.7185],
+            [85.318, 27.7205],
+            [85.3168, 27.722],
+            [85.3155, 27.7215],
+            [85.3145, 27.72],
+            [85.314, 27.7185],
+            [85.315, 27.718]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "shapeName": "Patan Museum Area",
+        "activityType": "Hiking",
+        "distance": 6.2,
+        "duration": 2800,
+        "areaCovered": 45.8
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [85.338, 27.675],
+            [85.3395, 27.6745],
+            [85.341, 27.6755],
+            [85.3415, 27.6775],
+            [85.3405, 27.679],
+            [85.339, 27.6795],
+            [85.3375, 27.6785],
+            [85.337, 27.6765],
+            [85.338, 27.675]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "shapeName": "Bhaktapur Durbar Square",
+        "activityType": "Trekking",
+        "distance": 7.3,
+        "duration": 3000,
+        "areaCovered": 61.2
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [85.428, 27.63],
+            [85.4295, 26.6295],
+            [85.431, 27.6305],
+            [85.4315, 27.6325],
+            [85.4305, 26.634],
+            [85.429, 27.6345],
+            [85.4275, 27.6335],
+            [85.427, 27.6315],
+            [85.428, 26.63]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "shapeName": "Swayambhunath Temple",
+        "activityType": "Hiking",
+        "distance": 5.8,
+        "duration": 2900,
+        "areaCovered": 42.7
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [85.288, 27.736],
+            [85.2895, 27.7355],
+            [85.291, 27.7365],
+            [85.2915, 27.7385],
+            [85.2905, 27.74],
+            [85.289, 27.7405],
+            [85.2875, 27.7395],
+            [85.287, 27.7375],
+            [85.288, 27.736]
+          ]
+        ]
+      }
+    }
+  ]
+}
