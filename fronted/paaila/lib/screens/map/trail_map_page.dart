@@ -3,6 +3,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:paaila/models/trail_model.dart';
 import 'package:paaila/services/trail_service.dart';
 import 'package:paaila/services/territory_conquest_service.dart';
+import 'package:paaila/widgets/app_header.dart';
 
 class TrailMapPage extends StatefulWidget {
   const TrailMapPage({super.key});
@@ -310,91 +311,90 @@ class _TrailMapPageState extends State<TrailMapPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF2FFF7),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF00A86B),
-        elevation: 0,
-        toolbarHeight: 72,
-        titleSpacing: 16,
-        title: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      backgroundColor: const Color(0xFFF5F5F5),
+      body: SafeArea(
+        child: Column(
           children: [
-            Text(
-              'Trail Territories',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-            SizedBox(height: 4),
-            Text(
-              'Your claimed territories',
-              style: TextStyle(fontSize: 12, color: Colors.white70),
+            const AppHeader(),
+            Expanded(
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : Stack(
+                      children: [
+                        GoogleMap(
+                          initialCameraPosition: const CameraPosition(
+                            target: LatLng(28.252, 83.98),
+                            zoom: 13,
+                          ),
+                          polygons: _polygons,
+                          polylines: _polylines,
+                          myLocationButtonEnabled: true,
+                          zoomControlsEnabled: true,
+                          buildingsEnabled: false,
+                          onMapCreated: (controller) {
+                            _mapController = controller;
+                            if (_polygons.isNotEmpty || _polylines.isNotEmpty) {
+                              controller.animateCamera(
+                                CameraUpdate.newLatLngBounds(
+                                  _calculateBounds(),
+                                  100,
+                                ),
+                              );
+                            }
+                          },
+                        ),
+                        // Gradient overlay
+                        Positioned.fill(
+                          child: IgnorePointer(
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    Colors.white.withValues(alpha: 0.2),
+                                    Colors.white.withValues(alpha: 0.02),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        // Conquest toggle button
+                        Positioned(
+                          top: 16,
+                          right: 16,
+                          child: Material(
+                            elevation: 4,
+                            borderRadius: BorderRadius.circular(12),
+                            color: Colors.white,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(12),
+                              onTap: () {
+                                setState(() {
+                                  _enableConquest = !_enableConquest;
+                                  _isLoading = true;
+                                });
+                                _loadPolygons();
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Icon(
+                                  _enableConquest
+                                      ? Icons.layers
+                                      : Icons.layers_outlined,
+                                  color: const Color(0xFF00A86B),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
             ),
           ],
         ),
-        actions: [
-          IconButton(
-            icon: Icon(
-              _enableConquest ? Icons.layers : Icons.layers_outlined,
-              color: Colors.white,
-            ),
-            tooltip: _enableConquest
-                ? 'Show original territories'
-                : 'Show conquered territories',
-            onPressed: () {
-              setState(() {
-                _enableConquest = !_enableConquest;
-                _isLoading = true;
-              });
-              _loadPolygons();
-            },
-          ),
-        ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Stack(
-              children: [
-                GoogleMap(
-                  initialCameraPosition: const CameraPosition(
-                    target: LatLng(28.252, 83.98),
-                    zoom: 13,
-                  ),
-                  polygons: _polygons,
-                  polylines: _polylines,
-                  myLocationButtonEnabled: true,
-                  zoomControlsEnabled: true,
-                  buildingsEnabled: false,
-                  onMapCreated: (controller) {
-                    _mapController = controller;
-                    if (_polygons.isNotEmpty || _polylines.isNotEmpty) {
-                      controller.animateCamera(
-                        CameraUpdate.newLatLngBounds(_calculateBounds(), 100),
-                      );
-                    }
-                  },
-                ),
-                // Gradient overlay
-                Positioned.fill(
-                  child: IgnorePointer(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.white.withValues(alpha: 0.2),
-                            Colors.white.withValues(alpha: 0.02),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
     );
   }
 }
