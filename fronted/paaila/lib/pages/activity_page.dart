@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../screens/map/map_for_running.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../screens/map/map_for_running.dart';
 import '../providers/location_provider.dart';
 
 class ActivityPage extends ConsumerStatefulWidget {
@@ -36,10 +35,7 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
             SizedBox(height: 4),
             Text(
               'Claim your territory, one step at a time',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.white70,
-              ),
+              style: TextStyle(fontSize: 12, color: Colors.white70),
             ),
           ],
         ),
@@ -53,19 +49,13 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
             const Text(
               'Start Your Run',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 4),
             const Text(
               'Claim territory with every step',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey,
-              ),
+              style: TextStyle(fontSize: 14, color: Colors.grey),
             ),
             const SizedBox(height: 24),
 
@@ -114,10 +104,7 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
             const Text(
               'Ready to claim new territory? Start your activity and conquer routes around Kathmandu!',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey,
-              ),
+              style: TextStyle(fontSize: 14, color: Colors.grey),
             ),
 
             const SizedBox(height: 32),
@@ -141,10 +128,7 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
                 children: [
                   const Text(
                     'Suggested Routes',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 12),
                   _routeTile(
@@ -179,7 +163,9 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
                 ),
                 icon: const Icon(Icons.play_arrow_rounded, color: Colors.white),
                 label: Text(
-                  ref.watch(locationProvider).isTracking ? 'Stop Activity' : 'Start Activity',
+                  ref.watch(locationProvider).isTracking
+                      ? 'Stop Activity'
+                      : 'Start Activity',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -192,7 +178,6 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
         ),
       ),
     );
-    
   }
 
   Widget _routeTile({
@@ -209,38 +194,26 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
             color: iconColor.withOpacity(0.1),
             shape: BoxShape.circle,
           ),
-          child: Icon(
-            Icons.location_on_rounded,
-            color: iconColor,
-            size: 18,
-          ),
+          child: Icon(Icons.location_on_rounded, color: iconColor, size: 18),
         ),
         const SizedBox(width: 12),
         Expanded(
           child: Text(
             title,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
           ),
         ),
         Text(
           distance,
-          style: const TextStyle(
-            fontSize: 14,
-            color: Colors.grey,
-          ),
+          style: const TextStyle(fontSize: 14, color: Colors.grey),
         ),
       ],
     );
   }
 
   void _onStartActivity() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => const MapForRunningPage(),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const MapForRunningPage()));
   }
 }

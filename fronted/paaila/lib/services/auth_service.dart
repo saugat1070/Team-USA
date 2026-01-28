@@ -1,5 +1,6 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_model.dart';
 import '../models/auth_request_models.dart';
 import '../models/auth_response_models.dart';
@@ -8,18 +9,35 @@ class AuthService {
   static const String baseUrl =
       'http://192.168.1.72:3000/api/v1'; // Update with your API URL
   static String? _authToken;
+  static const String _tokenKey = 'jwt_token';
 
   // Get stored auth token
   static String? get authToken => _authToken;
 
-  // Set auth token (usually after login)
-  static void setAuthToken(String token) {
-    _authToken = token;
+  // Initialize - load token from storage on app start
+  static Future<void> init() async {
+    final prefs = await SharedPreferences.getInstance();
+    _authToken = prefs.getString(_tokenKey);
   }
 
-  // Clear auth token (logout)
-  static void clearAuthToken() {
+  // Set auth token and persist to storage
+  static Future<void> setAuthToken(String token) async {
+    _authToken = token;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_tokenKey, token);
+  }
+
+  // Clear auth token from memory and storage
+  static Future<void> clearAuthToken() async {
     _authToken = null;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_tokenKey);
+  }
+
+  // Check if user has a stored token (for auto-login)
+  static Future<bool> hasStoredToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.containsKey(_tokenKey);
   }
 
   // Login with email and password
@@ -44,7 +62,7 @@ class AuthService {
         final loginResponse = LoginResponse.fromJson(jsonResponse);
 
         // Store token if login successful
-        setAuthToken(loginResponse.token);
+        await setAuthToken(loginResponse.token);
 
         return loginResponse;
       } else if (response.statusCode == 401) {
@@ -99,7 +117,7 @@ class AuthService {
         final signUpResponse = SignUpResponse.fromJson(jsonResponse);
 
         // Store token if signup successful
-        setAuthToken(signUpResponse.token);
+        await setAuthToken(signUpResponse.token);
 
         return signUpResponse;
       } else if (response.statusCode == 400) {
@@ -148,7 +166,7 @@ class AuthService {
     } catch (e) {
       print('Logout error: $e');
     } finally {
-      clearAuthToken();
+      await clearAuthToken();
     }
   }
 
@@ -174,7 +192,7 @@ class AuthService {
         final jsonResponse = jsonDecode(response.body);
         final newToken = jsonResponse['token'] as String?;
         if (newToken != null) {
-          setAuthToken(newToken);
+          await setAuthToken(newToken);
           return newToken;
         }
       }
@@ -207,7 +225,7 @@ class AuthService {
         final jsonResponse = jsonDecode(response.body);
         return User.fromJson(jsonResponse['user']);
       } else if (response.statusCode == 401) {
-        clearAuthToken();
+        await clearAuthToken();
       }
       return null;
     } catch (e) {
