@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import '../../widgets/app_header.dart';
 
 class TrailMapPage extends StatefulWidget {
   const TrailMapPage({super.key});
@@ -11,6 +12,7 @@ class TrailMapPage extends StatefulWidget {
 }
 
 class _TrailMapPageState extends State<TrailMapPage> {
+  // ignore: unused_field - kept for future map control features
   GoogleMapController? _mapController;
   Set<Polygon> _polygons = {};
   bool _isLoading = true;
@@ -112,73 +114,64 @@ class _TrailMapPageState extends State<TrailMapPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF2FFF7),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF00A86B),
-        elevation: 0,
-        toolbarHeight: 72,
-        titleSpacing: 16,
-        title: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      backgroundColor: const Color(0xFFF5F5F5),
+      body: SafeArea(
+        child: Column(
           children: [
-            Text(
-              'Trail Territories',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-            SizedBox(height: 4),
-            Text(
-              'Your claimed territories',
-              style: TextStyle(fontSize: 12, color: Colors.white70),
+            const AppHeader(),
+            Expanded(
+              child: _isLoading
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF00A86B),
+                      ),
+                    )
+                  : Stack(
+                      children: [
+                        GoogleMap(
+                          initialCameraPosition: const CameraPosition(
+                            target: LatLng(28.252, 83.98),
+                            zoom: 13,
+                          ),
+                          polygons: _polygons,
+                          myLocationButtonEnabled: true,
+                          zoomControlsEnabled: true,
+                          buildingsEnabled: false,
+                          onMapCreated: (controller) {
+                            _mapController = controller;
+                            if (_polygons.isNotEmpty) {
+                              controller.animateCamera(
+                                CameraUpdate.newLatLngBounds(
+                                  _calculateBounds(),
+                                  100,
+                                ),
+                              );
+                            }
+                          },
+                        ),
+                        // Gradient overlay
+                        Positioned.fill(
+                          child: IgnorePointer(
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    Colors.white.withOpacity(0.2),
+                                    Colors.white.withOpacity(0.02),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
             ),
           ],
         ),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Stack(
-              children: [
-                GoogleMap(
-                  initialCameraPosition: const CameraPosition(
-                    target: LatLng(28.252, 83.98),
-                    zoom: 13,
-                  ),
-                  polygons: _polygons,
-                  myLocationButtonEnabled: true,
-                  zoomControlsEnabled: true,
-                  buildingsEnabled: false,
-                  onMapCreated: (controller) {
-                    _mapController = controller;
-                    if (_polygons.isNotEmpty) {
-                      controller.animateCamera(
-                        CameraUpdate.newLatLngBounds(_calculateBounds(), 100),
-                      );
-                    }
-                  },
-                ),
-
-                // Gradient overlay
-                Positioned.fill(
-                  child: IgnorePointer(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.white.withOpacity(0.2),
-                            Colors.white.withOpacity(0.02),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
     );
   }
 }
