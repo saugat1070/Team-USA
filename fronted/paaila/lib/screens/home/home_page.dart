@@ -316,13 +316,7 @@ class HomePage extends ConsumerWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                _buildRunnerCard('Anjali B.', '18.5 km this week', 1),
-                const SizedBox(height: 8),
-                _buildRunnerCard('Rajesh K.', '16.2 km this week', 2),
-                const SizedBox(height: 8),
-                _buildRunnerCard('You', '14.8 km this week', 3),
-                const SizedBox(height: 24),
+                //const _RankingListItem(),
                 // Popular Routes
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,

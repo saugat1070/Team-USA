@@ -1,5 +1,5 @@
 import 'package:socket_io_client/socket_io_client.dart' as IO;
-
+import './data_socket_service.dart';
 class SocketService {
   static final SocketService _instance = SocketService._internal();
   late IO.Socket socket;
@@ -30,6 +30,12 @@ class SocketService {
     socket.onConnect((_) {
       _connected = true;
       print('Socket connected');
+      
+      // DataSocketService().sendTrailCoordinates("WRC College");
+      // DataSocketService().sendTrailCoordinates("Pashupati Area");
+      // DataSocketService().sendTrailCoordinates("Futsal Area");
+      // DataSocketService().sendTrailCoordinates("Gharmikhola Trail");
+
     });
 
     socket.onDisconnect((_) {

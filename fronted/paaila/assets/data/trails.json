@@ -5,10 +5,7 @@
       "type": "Feature",
       "properties": {
         "shapeName": "WRC College",
-        "activityType": "Running",
-        "distance": 4.96,
-        "duration": 3118,
-        "areaCovered": 75.434
+        "activityType": "Running"
       },
       "geometry": {
         "type": "Polygon",
@@ -31,10 +28,7 @@
       "type": "Feature",
       "properties": {
         "shapeName": "Pashupati Area",
-        "activityType": "Cycling",
-        "distance": 10.24,
-        "duration": 5420,
-        "areaCovered": 150.567
+        "activityType": "Cycling"
       },
       "geometry": {
         "type": "Polygon",
@@ -48,7 +42,46 @@
           ]
         ]
       }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "shapeName": "Futsal Area",
+        "activityType": "Walking"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [28.267, 83.965],
+            [28.269, 83.967],
+            [28.268, 83.969],
+            [28.266, 83.968],
+            [28.265, 83.966]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "shapeName": "Gharmikhola Trail",
+        "activityType": "Hiking"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [28.28, 83.98],
+            [28.282, 83.982],
+            [28.281, 83.984],
+            [28.279, 83.983],
+            [28.278, 83.981]
+          ]
+        ]
+      }
     }
+
     
   ]
 }
