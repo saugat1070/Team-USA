@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:paaila/models/trail_model.dart';
 import 'package:paaila/services/trail_service.dart';
+import 'package:paaila/services/territory_conquest_service.dart';
 
 class TrailMapPage extends StatefulWidget {
   const TrailMapPage({super.key});
@@ -15,6 +16,8 @@ class _TrailMapPageState extends State<TrailMapPage> {
   Set<Polygon> _polygons = {};
   Set<Polyline> _polylines = {};
   bool _isLoading = true;
+  bool _enableConquest = true; // Toggle for territory conquest feature
+  Map<String, TerritoryDisplay> _territoryDisplays = {};
 
   @override
   void initState() {
@@ -22,7 +25,11 @@ class _TrailMapPageState extends State<TrailMapPage> {
     _loadPolygons();
   }
 
-  void _showTerritoryDetailsDialog(Territory territory, Color color) {
+  void _showTerritoryDetailsDialog(
+    Territory territory,
+    Color color, {
+    TerritoryDisplay? display,
+  }) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -57,9 +64,26 @@ class _TrailMapPageState extends State<TrailMapPage> {
             const SizedBox(height: 12),
             _buildDetailRow(
               icon: Icons.square_foot,
-              label: 'Total Area',
+              label: 'Original Area',
               value: territory.formattedArea,
             ),
+            if (display != null && display.wasConquered) ...[
+              const SizedBox(height: 12),
+              _buildDetailRow(
+                icon: Icons.remove_circle_outline,
+                label: 'Conquered Area',
+                value:
+                    '${display.formattedConqueredArea} (${display.conqueredPercentage.toStringAsFixed(1)}%)',
+                valueColor: Colors.red,
+              ),
+              const SizedBox(height: 12),
+              _buildDetailRow(
+                icon: Icons.check_circle_outline,
+                label: 'Remaining Area',
+                value: display.formattedRemainingArea,
+                valueColor: Colors.green,
+              ),
+            ],
             const SizedBox(height: 12),
             _buildDetailRow(
               icon: Icons.timer,
@@ -78,6 +102,12 @@ class _TrailMapPageState extends State<TrailMapPage> {
               label: 'Distance',
               value: territory.formattedDistance,
             ),
+            const SizedBox(height: 12),
+            _buildDetailRow(
+              icon: Icons.calendar_today,
+              label: 'Captured On',
+              value: _formatDate(territory.createdAt),
+            ),
           ],
         ),
         actions: [
@@ -93,10 +123,15 @@ class _TrailMapPageState extends State<TrailMapPage> {
     );
   }
 
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
+  }
+
   Widget _buildDetailRow({
     required IconData icon,
     required String label,
     required String value,
+    Color? valueColor,
   }) {
     return Row(
       children: [
@@ -112,9 +147,10 @@ class _TrailMapPageState extends State<TrailMapPage> {
               ),
               Text(
                 value,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
+                  color: valueColor,
                 ),
               ),
             ],
@@ -137,10 +173,17 @@ class _TrailMapPageState extends State<TrailMapPage> {
         const Color.fromARGB(200, 0, 137, 249), // Light Blue
       ];
 
+      // Process territory conquest if enabled
+      Map<String, TerritoryDisplay> conquestResult = {};
+      if (_enableConquest) {
+        conquestResult = TerritoryConquestService.processConquest(territories);
+      }
+
       int colorIndex = 0;
 
       final Set<Polygon> loadedPolygons = {};
       final Set<Polyline> loadedPolylines = {};
+      final Map<String, TerritoryDisplay> displayMap = {};
 
       for (var territory in territories) {
         final color = colors[colorIndex++ % colors.length];
@@ -168,26 +211,61 @@ class _TrailMapPageState extends State<TrailMapPage> {
           );
         }
 
-        // Create polygon from polygon coordinates
-        final polygonCoords = territory.polygonCoordinates;
-        if (polygonCoords.isNotEmpty) {
-          loadedPolygons.add(
-            Polygon(
-              polygonId: PolygonId('polygon_${territory.id}'),
-              points: polygonCoords,
-              strokeWidth: 3,
-              strokeColor: color,
-              fillColor: color.withOpacity(0.4),
-              consumeTapEvents: true,
-              onTap: () => _showTerritoryDetailsDialog(territory, color),
-            ),
-          );
+        // Create polygon(s) - either original or conquered versions
+        if (_enableConquest && conquestResult.containsKey(territory.id)) {
+          final display = conquestResult[territory.id]!;
+          displayMap[territory.id] = display;
+
+          // Skip fully conquered territories (no remaining area)
+          if (display.isFullyConquered) continue;
+
+          // Add remaining polygon(s) after conquest
+          int subIndex = 0;
+          for (var polygonCoords in display.displayPolygons) {
+            if (polygonCoords.length >= 3) {
+              loadedPolygons.add(
+                Polygon(
+                  polygonId: PolygonId('polygon_${territory.id}_$subIndex'),
+                  points: polygonCoords,
+                  strokeWidth: 3,
+                  strokeColor: color,
+                  fillColor: color.withOpacity(
+                    display.wasConquered ? 0.3 : 0.4,
+                  ),
+                  consumeTapEvents: true,
+                  onTap: () => _showTerritoryDetailsDialog(
+                    territory,
+                    color,
+                    display: display,
+                  ),
+                ),
+              );
+              subIndex++;
+            }
+          }
+        } else {
+          // Original behavior without conquest
+          final polygonCoords = territory.polygonCoordinates;
+          if (polygonCoords.isNotEmpty) {
+            loadedPolygons.add(
+              Polygon(
+                polygonId: PolygonId('polygon_${territory.id}'),
+                points: polygonCoords,
+                strokeWidth: 3,
+                strokeColor: color,
+                fillColor: color.withOpacity(0.4),
+                consumeTapEvents: true,
+                onTap: () => _showTerritoryDetailsDialog(territory, color),
+              ),
+            );
+          }
         }
       }
 
       setState(() {
         _polylines = loadedPolylines;
         _polygons = loadedPolygons;
+        _territoryDisplays = displayMap;
         _isLoading = false;
       });
     } catch (e) {
@@ -256,6 +334,24 @@ class _TrailMapPageState extends State<TrailMapPage> {
             ),
           ],
         ),
+        actions: [
+          IconButton(
+            icon: Icon(
+              _enableConquest ? Icons.layers : Icons.layers_outlined,
+              color: Colors.white,
+            ),
+            tooltip: _enableConquest
+                ? 'Show original territories'
+                : 'Show conquered territories',
+            onPressed: () {
+              setState(() {
+                _enableConquest = !_enableConquest;
+                _isLoading = true;
+              });
+              _loadPolygons();
+            },
+          ),
+        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
