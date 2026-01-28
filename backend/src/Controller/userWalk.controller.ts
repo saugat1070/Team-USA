@@ -3,11 +3,12 @@ import { Request,Response } from "express";
 import { IRequest } from "./auth.controller.js";
 import UserLocation from "../Models/userLocation.model.js";
 import mongoose from "mongoose";
+import StrikeMaintenance from "../Models/strikeMaintenance.model.js";
 
 
 export const getLeaderboard = async (req: IRequest, res: Response) => {
     try {
-        const roomId = (req.user?.roomId || req.params.roomId) as string | undefined;
+        const roomId = (req.params.roomId || req.query.roomId || req.user?.roomId) as string | undefined;
         if (!roomId) {
             return res.status(400).json({ message: "roomId is required" });
         }
@@ -79,7 +80,6 @@ export const getLeaderboard = async (req: IRequest, res: Response) => {
                     totalAreaM2: 1,
                     avgSpeedMps: 1,
                     maxSpeedMps: 1,
-                    paceSecPerKm: 1,
                     sessions: 1,
                     user: {
                         _id: "$user._id",
@@ -89,10 +89,45 @@ export const getLeaderboard = async (req: IRequest, res: Response) => {
                 },
             },
         ]);
+        const rankedLeaderboard = leaderboard.map((entry, index) => ({
+            ...entry,
+            rank: index + 1,
+        }));
 
-        return res.status(200).json({ roomId, leaderboard });
+        return res.status(200).json({ roomId, leaderboard: rankedLeaderboard });
     } catch (error) {
         console.error("Error in getLeaderboard:", error);
         return res.status(500).json({ message: "Failed to fetch leaderboard" });
     }
 };
+
+
+export const getUserTeritory = async (req: IRequest, res: Response) => {
+    try {
+        const user = req.user;
+        if (!user) {
+            return res.status(401).json({ message: "Unauthorized" });
+        }
+        const territory = await UserLocation.find({ userId: user._id, status: "completed" })
+            .populate({
+                path: "userId",
+                select: "-password",
+            });
+        return res.status(200).json({ ok: true, territory });
+    } catch (error) {
+        console.error("Error in getUserTeritory:", error);
+        return res.status(500).json({ message: "Failed to fetch user territory" });
+    }
+};
+
+
+export const strikeMaintaince = async (req: IRequest, res: Response) => {  
+    const { userId, roomId, reason, points, issuedBy } = req.body;
+    if(!userId || !roomId){
+        return res.status(400).json({ message: "userId and roomId are required" });
+    }
+    const strike = await StrikeMaintenance.findOne({userId,roomId}).select("points maxPoint");
+    console.log(Date.now())
+    return res.status(200).json({ok:true,strike})
+
+}
