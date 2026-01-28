@@ -7,6 +7,9 @@ import 'package:paaila/screens/map/trail_map_page.dart';
 import '../../providers/bottom_nav_provider.dart';
 import '../../widgets/bottom_nav_bar.dart';
 import '../../screens/profile/user_profile.dart';
+import '../../models/popular_route.dart';
+import '../routes/all_routes_page.dart';
+import '../routes/route_detail_page.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
@@ -390,7 +393,12 @@ class HomePage extends ConsumerWidget {
                   ),
                   GestureDetector(
                     onTap: () {
-                      ref.read(bottomNavIndexProvider.notifier).setIndex(1);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const AllRoutesPage(),
+                        ),
+                      );
                     },
                     child: Text(
                       'See all',
@@ -409,41 +417,16 @@ class HomePage extends ConsumerWidget {
             // Horizontal scrollable route cards
             SizedBox(
               height: 140,
-              child: ListView(
+              child: ListView.builder(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                children: [
-                  _buildRouteCardCompact(
-                    'Thamel Circuit',
-                    '2.5 km',
-                    'Easy',
-                    'You',
-                  ),
-                  _buildRouteCardCompact(
-                    'Swayambhu Trail',
-                    '4.1 km',
-                    'Medium',
-                    'Priya S.',
-                  ),
-                  _buildRouteCardCompact(
-                    'Balaju Park Path',
-                    '1.9 km',
-                    'Easy',
-                    'Sanjay M.',
-                  ),
-                  _buildRouteCardCompact(
-                    'Patan Durbar Loop',
-                    '3.2 km',
-                    'Medium',
-                    'Anjali B.',
-                  ),
-                  _buildRouteCardCompact(
-                    'Boudha Circle',
-                    '2.8 km',
-                    'Easy',
-                    'Rajesh K.',
-                  ),
-                ],
+                itemCount: PopularRoute.sampleRoutes.length > 5
+                    ? 5
+                    : PopularRoute.sampleRoutes.length,
+                itemBuilder: (context, index) {
+                  final route = PopularRoute.sampleRoutes[index];
+                  return _buildRouteCardCompact(context, route);
+                },
               ),
             ),
 
@@ -635,14 +618,9 @@ class HomePage extends ConsumerWidget {
     );
   }
 
-  Widget _buildRouteCardCompact(
-    String name,
-    String distance,
-    String difficulty,
-    String owner,
-  ) {
+  Widget _buildRouteCardCompact(BuildContext context, PopularRoute route) {
     Color diffColor;
-    switch (difficulty.toLowerCase()) {
+    switch (route.difficulty.toLowerCase()) {
       case 'easy':
         diffColor = Color(0xFF43A047);
         break;
@@ -656,90 +634,106 @@ class HomePage extends ConsumerWidget {
         diffColor = _textLight;
     }
 
-    return Container(
-      width: 160,
-      margin: const EdgeInsets.only(right: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: _cardColor,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: _primaryGreenLight,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  Icons.route_rounded,
-                  color: _primaryGreen,
-                  size: 18,
-                ),
-              ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: diffColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  difficulty,
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: diffColor,
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => RouteDetailPage(route: route),
+          ),
+        );
+      },
+      child: Container(
+        width: 160,
+        margin: const EdgeInsets.only(right: 12),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: _cardColor,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: _primaryGreenLight,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.route_rounded,
+                    color: _primaryGreen,
+                    size: 18,
                   ),
                 ),
-              ),
-            ],
-          ),
-          const Spacer(),
-          Text(
-            name,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: _textDark,
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: diffColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    route.difficulty,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: diffColor,
+                    ),
+                  ),
+                ),
+              ],
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              Text(distance, style: TextStyle(fontSize: 12, color: _textMuted)),
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 6),
-                width: 3,
-                height: 3,
-                decoration: BoxDecoration(
-                  color: _textLight,
-                  shape: BoxShape.circle,
-                ),
+            const Spacer(),
+            Text(
+              route.name,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: _textDark,
               ),
-              Expanded(
-                child: Text(
-                  owner == 'You' ? 'Yours' : owner,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: owner == 'You' ? _primaryGreen : _textMuted,
-                    fontWeight: owner == 'You'
-                        ? FontWeight.w600
-                        : FontWeight.w400,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                Text(
+                  route.distance,
+                  style: TextStyle(fontSize: 12, color: _textMuted),
+                ),
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 6),
+                  width: 3,
+                  height: 3,
+                  decoration: BoxDecoration(
+                    color: _textLight,
+                    shape: BoxShape.circle,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-            ],
-          ),
-        ],
+                Expanded(
+                  child: Text(
+                    route.owner == 'You' ? 'Yours' : route.owner,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: route.owner == 'You' ? _primaryGreen : _textMuted,
+                      fontWeight: route.owner == 'You'
+                          ? FontWeight.w600
+                          : FontWeight.w400,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
