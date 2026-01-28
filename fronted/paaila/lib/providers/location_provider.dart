@@ -3,6 +3,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import '../services/location_service.dart';
+import '../services/location_api_service.dart';
 import '../services/socket_service.dart';
 import '../providers/socket_provider.dart';
 
@@ -83,6 +84,12 @@ class LocationNotifier extends StateNotifier<LocationState> {
           position.latitude,
           position.longitude,
         );
+        // Send location via POST API
+        LocationApiService.sendLocation(
+          position.latitude,
+          position.longitude,
+        );
+        
       } else {
         state = state.copyWith(
           isTracking: false,
@@ -124,6 +131,11 @@ class LocationNotifier extends StateNotifier<LocationState> {
 
         // Send location via socket (server identifies user from JWT in socket connection)
         socketService.sendLocation(
+          position.latitude,
+          position.longitude,
+        );
+        // Send location via POST API
+        LocationApiService.sendLocation(
           position.latitude,
           position.longitude,
         );

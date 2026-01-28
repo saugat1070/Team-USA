@@ -11,6 +11,7 @@ import '../../providers/location_provider.dart';
 import '../../repositories/run_repository.dart';
 import '../../providers/socket_provider.dart';
 
+
 class MapForRunningPage extends ConsumerStatefulWidget {
   const MapForRunningPage({super.key});
 
@@ -74,10 +75,7 @@ class _MapForRunningPageState extends ConsumerState<MapForRunningPage> {
             SizedBox(height: 4),
             Text(
               'Claim your territory, one step at a time',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.white70,
-              ),
+              style: TextStyle(fontSize: 12, color: Colors.white70),
             ),
           ],
         ),
@@ -85,82 +83,82 @@ class _MapForRunningPageState extends ConsumerState<MapForRunningPage> {
       body: locationState.isTracking
           ? const Center(child: CircularProgressIndicator())
           : locationState.position == null
-              ? const Center(child: Text('Location not available'))
-              : Column(
-                  children: [
-                    /// 🗺 Google Map
-                    Expanded(
-                      child: Container(
-                        margin: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.grey.shade300),
+          ? const Center(child: Text('Location not available'))
+          : Column(
+              children: [
+                /// 🗺 Google Map
+                Expanded(
+                  child: Container(
+                    margin: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: GoogleMap(
+                        initialCameraPosition: CameraPosition(
+                          target: LatLng(
+                            locationState.position!.latitude,
+                            locationState.position!.longitude,
+                          ),
+                          zoom: 17,
                         ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
-                          child: GoogleMap(
-                            initialCameraPosition: CameraPosition(
-                              target: LatLng(
-                                locationState.position!.latitude,
-                                locationState.position!.longitude,
-                              ),
-                              zoom: 17,
-                            ),
-                            markers: _markers,
-                            myLocationEnabled: true,
-                            myLocationButtonEnabled: true,
-                            polylines: _polylines,
-                            onMapCreated: (controller) {
-                              _mapController = controller;
-                            },
-                          ),
-                        ),
+                        markers: _markers,
+                        myLocationEnabled: true,
+                        myLocationButtonEnabled: true,
+                        polylines: _polylines,
+                        onMapCreated: (controller) {
+                          _mapController = controller;
+                        },
                       ),
                     ),
-
-                    /// ▶️ Controls
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: _isTracking ? null : _startRun,
-                              child: const Text('Start'),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: _isTracking ? _stopRun : null,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.redAccent,
-                              ),
-                              child: const Text('Stop'),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    /// 📊 Stats Panel
-                    locationStream.when(
-                      data: (position) {
-                        if (_isTracking) {
-                          _handleNewPosition(position);
-                        }
-
-                        return _buildStats();
-                      },
-                      loading: () => _buildStats(),
-                      error: (e, _) => Text('Error: $e'),
-                    ),
-                  ],
+                  ),
                 ),
+
+                /// ▶️ Controls
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: _isTracking ? null : _startRun,
+                          child: const Text('Start'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: _isTracking ? _stopRun : null,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.redAccent,
+                          ),
+                          child: const Text('Stop'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                /// 📊 Stats Panel
+                locationStream.when(
+                  data: (position) {
+                    if (_isTracking) {
+                      _handleNewPosition(position);
+                    }
+
+                    return _buildStats();
+                  },
+                  loading: () => _buildStats(),
+                  error: (e, _) => Text('Error: $e'),
+                ),
+              ],
+            ),
     );
   }
 
@@ -171,13 +169,17 @@ class _MapForRunningPageState extends ConsumerState<MapForRunningPage> {
     // Send every new position to the server (continuous stream)
     final socketService = ref.read(socketServiceProvider);
     if (_routePoints.isEmpty) {
-      socketService.sendLocation(position.latitude, position.longitude); // walk:start with first point
+      socketService.sendLocation(
+        position.latitude,
+        position.longitude,
+      ); // walk:start with first point
     } else {
       print("Location sent: ${position.latitude}, ${position.longitude}");
-      socketService.sendLocationUpdate(position.latitude, position.longitude); // walk:location stream
+      socketService.sendLocationUpdate(
+        position.latitude,
+        position.longitude,
+      ); // walk:location stream
     }
-
-    
 
     if (_routePoints.isEmpty) {
       /// First point: lock as initial position and add a marker
@@ -228,9 +230,7 @@ class _MapForRunningPageState extends ConsumerState<MapForRunningPage> {
       ),
     );
 
-    _mapController?.animateCamera(
-      CameraUpdate.newLatLng(newPoint),
-    );
+    _mapController?.animateCamera(CameraUpdate.newLatLng(newPoint));
   }
 
   /// Stats UI
@@ -239,12 +239,13 @@ class _MapForRunningPageState extends ConsumerState<MapForRunningPage> {
 
     final duration = isRunning
         ? (_startTime == null
-            ? Duration.zero
-            : DateTime.now().difference(_startTime!))
+              ? Duration.zero
+              : DateTime.now().difference(_startTime!))
         : _lastRunDuration;
 
-    final distanceMeters =
-        isRunning ? _totalDistance : _lastRunDistance; // meters
+    final distanceMeters = isRunning
+        ? _totalDistance
+        : _lastRunDistance; // meters
     final distanceKm = distanceMeters / 1000.0;
 
     // Calculate current or last pace
@@ -273,9 +274,7 @@ class _MapForRunningPageState extends ConsumerState<MapForRunningPage> {
             'Pace',
             (pace == 0.0 && !_isTracking && _lastRunPace > 0)
                 ? '${_lastRunPace.toStringAsFixed(2)} min/km'
-                : (pace == 0.0
-                    ? '-'
-                    : '${pace.toStringAsFixed(2)} min/km'),
+                : (pace == 0.0 ? '-' : '${pace.toStringAsFixed(2)} min/km'),
           ),
         ],
       ),
@@ -288,10 +287,7 @@ class _MapForRunningPageState extends ConsumerState<MapForRunningPage> {
       children: [
         Text(
           value,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         Text(label, style: const TextStyle(color: Colors.grey)),
       ],
@@ -414,16 +410,16 @@ class _MapForRunningPageState extends ConsumerState<MapForRunningPage> {
             children: [
               const Text(
                 'Run Details',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _statItem('Distance', '${run.distanceKm.toStringAsFixed(2)} km'),
+                  _statItem(
+                    'Distance',
+                    '${run.distanceKm.toStringAsFixed(2)} km',
+                  ),
                   _statItem(
                     'Duration',
                     '${duration.inMinutes}:${(duration.inSeconds % 60).toString().padLeft(2, '0')}',
@@ -463,7 +459,8 @@ class _MapForRunningPageState extends ConsumerState<MapForRunningPage> {
     final dLat = _degToRad(lat2 - lat1);
     final dLon = _degToRad(lon2 - lon1);
 
-    final a = sin(dLat / 2) * sin(dLat / 2) +
+    final a =
+        sin(dLat / 2) * sin(dLat / 2) +
         cos(_degToRad(lat1)) *
             cos(_degToRad(lat2)) *
             sin(dLon / 2) *

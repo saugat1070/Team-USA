@@ -45,10 +45,7 @@ class SocketService {
   void sendLocation(double lat, double lng) {
     if (!_connected) return;
 
-    socket.emit("walk:start", {
-      "latitude": lat,
-      "longitude": lng,
-    });
+    socket.emit("walk:start", {"latitude": lat, "longitude": lng});
   }
 
   /// Sends each new position during an active run (continuous stream).
@@ -56,13 +53,10 @@ class SocketService {
   void sendLocationUpdate(double lat, double lng) {
     print("Location update sent: $lat, $lng");
     print("Connected: $_connected");
-    
+
     if (!_connected) return;
 
-    socket.emit("walk:start", {
-      "latitude": lat,
-      "longitude": lng,
-    });
+    socket.emit("walk:start", {"latitude": lat, "longitude": lng});
   }
 
   void stopRun() {
