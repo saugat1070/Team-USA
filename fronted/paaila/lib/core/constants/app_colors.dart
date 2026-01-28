@@ -1,69 +1,136 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  // Primary brand greens (activity / success / ownership)
-  /// Primary deep green used for buttons, active states and primary branding.
-  static const Color primaryGreen = Color(0xFF2E7D32);
+  // ─────────────────────────────────────────────────────────────────────────
+  // PRIMARY BRAND - Soft, calming green (health & wellness focused)
+  // ─────────────────────────────────────────────────────────────────────────
+  /// Primary green - used sparingly for key actions and highlights
+  static const Color primary = Color(0xFF2E7D32);
 
-  /// Lighter variant of primaryGreen for surfaces or subtle highlights.
-  static const Color primaryGreenLight = Color(0xFF66BB6A);
+  /// Lighter tint for subtle backgrounds and hover states
+  static const Color primaryLight = Color(0xFFE8F5E9);
 
-  /// Darker variant for app bars or elevated elements.
-  static const Color primaryGreenDark = Color(0xFF1B5E20);
+  /// Very subtle tint for large surface areas
+  static const Color primarySoft = Color(0xFFF1F8F2);
 
-  // Accent colors (energy, social hints)
-  /// Energetic orange used for call-to-action, streaks and activity nudges.
-  static const Color energyOrange = Color(0xFFFF7043);
+  // ─────────────────────────────────────────────────────────────────────────
+  // ACCENT COLORS - Used minimally for emphasis
+  // ─────────────────────────────────────────────────────────────────────────
+  /// Warm accent for streaks, achievements, energy
+  static const Color accent = Color(0xFFFF8A65);
 
-  /// Bright teal for special accents, badges and map pins.
-  static const Color accentTeal = Color(0xFF00BFA5);
+  /// Accent light tint
+  static const Color accentLight = Color(0xFFFFF3E0);
 
-  /// Vibrant purple used to mark territory claims and map ownership highlights.
-  static const Color claimPurple = Color(0xFF7C4DFF);
+  /// Blue accent for informational elements
+  static const Color accentBlue = Color(0xFF5C9CE5);
 
-  /// Opponent/contested color used when a route is challenged or lost.
-  static const Color contestedRed = Color(0xFFFF5252);
+  /// Blue light tint
+  static const Color accentBlueLight = Color(0xFFE3F2FD);
 
-  // Progress & status
-  /// Yellow/amber used for progress bars, partial completion and cautions.
-  static const Color progressAmber = Color(0xFFFFD600);
+  // ─────────────────────────────────────────────────────────────────────────
+  // STATUS COLORS
+  // ─────────────────────────────────────────────────────────────────────────
+  /// Success state
+  static const Color success = Color(0xFF43A047);
 
-  /// Success color (keeps backward compatibility with earlier green).
-  static const Color successGreen = Color(0xFF4CAF50);
+  /// Warning/caution state
+  static const Color warning = Color(0xFFFFA726);
 
-  /// Error color for failures and destructive actions.
-  static const Color errorRed = Color(0xFFD32F2F);
+  /// Error/destructive state
+  static const Color error = Color(0xFFE53935);
 
-  // Surfaces and text
-  /// App background: soft off-white to reduce glare while keeping contrast.
-  static const Color background = Color(0xFFF6F8F9);
+  // ─────────────────────────────────────────────────────────────────────────
+  // SURFACES & BACKGROUNDS - Clean, minimal, light
+  // ─────────────────────────────────────────────────────────────────────────
+  /// Main app background - warm white
+  static const Color background = Color(0xFFFAFAFA);
 
-  /// Surface color for cards and panels.
+  /// Card/surface background - pure white
   static const Color surface = Color(0xFFFFFFFF);
 
-  /// Pure white background.
-  static const Color pureWhite = Color(0xFFFFFFFF);
+  /// Slightly elevated surface
+  static const Color surfaceElevated = Color(0xFFFFFFFF);
 
-  /// Primary text color: deep charcoal/ink for best readability.
-  static const Color textPrimary = Color(0xFF0D1B2A);
+  /// Muted background for sections
+  static const Color surfaceMuted = Color(0xFFF5F5F5);
 
-  /// Secondary text / captions.
-  static const Color textSecondary = Color(0xFF5B6B78);
+  // ─────────────────────────────────────────────────────────────────────────
+  // TEXT COLORS - High contrast, readable
+  // ─────────────────────────────────────────────────────────────────────────
+  /// Primary text - near black for readability
+  static const Color textPrimary = Color(0xFF1A1A1A);
 
-  // Geography / theming for map and terrain
-  /// Earth/terrain brown for trails, dirt paths and subtle map overlays.
+  /// Secondary text - softer for descriptions
+  static const Color textSecondary = Color(0xFF6B6B6B);
+
+  /// Tertiary/hint text
+  static const Color textTertiary = Color(0xFF9E9E9E);
+
+  /// Inverted text on dark backgrounds
+  static const Color textOnPrimary = Color(0xFFFFFFFF);
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // BORDERS & DIVIDERS
+  // ─────────────────────────────────────────────────────────────────────────
+  /// Subtle border for cards
+  static const Color border = Color(0xFFE8E8E8);
+
+  /// Stronger border for inputs
+  static const Color borderStrong = Color(0xFFD0D0D0);
+
+  /// Divider color
+  static const Color divider = Color(0xFFF0F0F0);
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // RANKING & GAMIFICATION
+  // ─────────────────────────────────────────────────────────────────────────
+  /// Gold for first place
+  static const Color rankGold = Color(0xFFFFB300);
+
+  /// Silver for second place
+  static const Color rankSilver = Color(0xFF9E9E9E);
+
+  /// Bronze for third place
+  static const Color rankBronze = Color(0xFFBF8040);
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // DIFFICULTY INDICATORS
+  // ─────────────────────────────────────────────────────────────────────────
+  /// Easy difficulty
+  static const Color difficultyEasy = Color(0xFF66BB6A);
+
+  /// Medium difficulty
+  static const Color difficultyMedium = Color(0xFFFFB74D);
+
+  /// Hard difficulty
+  static const Color difficultyHard = Color(0xFFEF5350);
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // SHADOWS & OVERLAYS
+  // ─────────────────────────────────────────────────────────────────────────
+  /// Soft shadow for cards
+  static Color shadow = Colors.black.withOpacity(0.04);
+
+  /// Medium shadow for elevated elements
+  static Color shadowMedium = Colors.black.withOpacity(0.08);
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // LEGACY COMPATIBILITY
+  // ─────────────────────────────────────────────────────────────────────────
+  static const Color primaryGreen = primary;
+  static const Color primaryGreenLight = primaryLight;
+  static const Color primaryGreenDark = Color(0xFF1B5E20);
+  static const Color energyOrange = accent;
+  static const Color accentTeal = Color(0xFF00BFA5);
+  static const Color claimPurple = Color(0xFF7C4DFF);
+  static const Color contestedRed = error;
+  static const Color progressAmber = warning;
+  static const Color successGreen = success;
+  static const Color errorRed = error;
+  static const Color pureWhite = surface;
+  static const Color neutralGray = textTertiary;
+  static const Color mutedBackground = surfaceMuted;
   static const Color terrainBrown = Color(0xFF8D6E63);
-
-  /// Friendly highlight used to tag friends, teammates or allied zones.
   static const Color friendGreen = Color(0xFF00E676);
-
-  /// Semi-transparent shadow used across cards and popups.
-  static Color shadow = Colors.black.withOpacity(0.15);
-
-  // Utility grays
-  /// Neutral gray used for dividers and disabled states.
-  static const Color neutralGray = Color(0xFF9AA6B2);
-
-  /// Subtle muted background for lists and empty states.
-  static const Color mutedBackground = Color(0xFFF0F3F5);
 }
