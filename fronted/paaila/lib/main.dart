@@ -10,6 +10,7 @@ import 'pages/activity_page.dart';
 import 'screens/profile/user_profile.dart';
 import 'services/auth_service.dart';
 import 'widgets/auth_guard.dart';
+import 'providers/trail_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

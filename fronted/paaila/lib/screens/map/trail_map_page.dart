@@ -1,7 +1,6 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:paaila/services/trail_service.dart';
 
 class TrailMapPage extends StatefulWidget {
   const TrailMapPage({super.key});
@@ -13,6 +12,7 @@ class TrailMapPage extends StatefulWidget {
 class _TrailMapPageState extends State<TrailMapPage> {
   GoogleMapController? _mapController;
   Set<Polygon> _polygons = {};
+  Set<Polyline> _polylines = {};
   bool _isLoading = true;
 
   @override
@@ -23,11 +23,7 @@ class _TrailMapPageState extends State<TrailMapPage> {
 
   Future<void> _loadPolygons() async {
     try {
-      final String geoJsonString = await rootBundle.loadString(
-        'data/trails.json',
-      );
-      final decoded = json.decode(geoJsonString);
-      final List features = decoded['features'] ?? [];
+      final territories = await TrailService.loadTrails();
 
       final colors = [
         const Color.fromARGB(200, 156, 39, 176), // Purple
@@ -40,36 +36,62 @@ class _TrailMapPageState extends State<TrailMapPage> {
 
       int colorIndex = 0;
 
-      final Set<Polygon> loadedPolygons = features.map<Polygon>((feature) {
-        final props = feature['properties'];
-        final List coords = feature['geometry']['coordinates'][0];
+      final Set<Polygon> loadedPolygons = {};
+      final Set<Polyline> loadedPolylines = {};
 
-        final List<LatLng> points = coords
-            .map<LatLng>((c) => LatLng(c[0].toDouble(), c[1].toDouble()))
-            .toList();
-
+      for (var territory in territories) {
         final color = colors[colorIndex++ % colors.length];
 
-        return Polygon(
-          polygonId: PolygonId(props['shapeName'] ?? 'trail_$colorIndex'),
-          points: points,
-          strokeWidth: 3,
-          strokeColor: color,
-          fillColor: color.withOpacity(0.4),
-          consumeTapEvents: true,
-          onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  '${props['shapeName']} • ${props['activityType']}',
-                ),
-              ),
-            );
-          },
-        );
-      }).toSet();
+        // Create polyline from track coordinates
+        final trackCoords = territory.trackCoordinates;
+        if (trackCoords.isNotEmpty) {
+          loadedPolylines.add(
+            Polyline(
+              polylineId: PolylineId('track_${territory.id}'),
+              points: trackCoords,
+              width: 4,
+              color: color,
+              consumeTapEvents: true,
+              onTap: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      '${territory.user.firstName} • ${territory.activityType} • ${territory.formattedDistance}',
+                    ),
+                  ),
+                );
+              },
+            ),
+          );
+        }
+
+        // Create polygon from polygon coordinates
+        final polygonCoords = territory.polygonCoordinates;
+        if (polygonCoords.isNotEmpty) {
+          loadedPolygons.add(
+            Polygon(
+              polygonId: PolygonId('polygon_${territory.id}'),
+              points: polygonCoords,
+              strokeWidth: 3,
+              strokeColor: color,
+              fillColor: color.withOpacity(0.4),
+              consumeTapEvents: true,
+              onTap: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      '${territory.user.firstName} • ${territory.activityType}',
+                    ),
+                  ),
+                );
+              },
+            ),
+          );
+        }
+      }
 
       setState(() {
+        _polylines = loadedPolylines;
         _polygons = loadedPolygons;
         _isLoading = false;
       });
@@ -82,7 +104,10 @@ class _TrailMapPageState extends State<TrailMapPage> {
   }
 
   LatLngBounds _calculateBounds() {
-    final allPoints = _polygons.expand((p) => p.points).toList();
+    final allPoints = [
+      ..._polygons.expand((p) => p.points),
+      ..._polylines.expand((p) => p.points),
+    ];
 
     if (allPoints.isEmpty) {
       return LatLngBounds(
@@ -147,19 +172,19 @@ class _TrailMapPageState extends State<TrailMapPage> {
                     zoom: 13,
                   ),
                   polygons: _polygons,
+                  polylines: _polylines,
                   myLocationButtonEnabled: true,
                   zoomControlsEnabled: true,
                   buildingsEnabled: false,
                   onMapCreated: (controller) {
                     _mapController = controller;
-                    if (_polygons.isNotEmpty) {
+                    if (_polygons.isNotEmpty || _polylines.isNotEmpty) {
                       controller.animateCamera(
                         CameraUpdate.newLatLngBounds(_calculateBounds(), 100),
                       );
                     }
                   },
                 ),
-
                 // Gradient overlay
                 Positioned.fill(
                   child: IgnorePointer(
@@ -169,8 +194,8 @@ class _TrailMapPageState extends State<TrailMapPage> {
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: [
-                            Colors.white.withOpacity(0.2),
-                            Colors.white.withOpacity(0.02),
+                            Colors.white.withValues(alpha: 0.2),
+                            Colors.white.withValues(alpha: 0.02),
                           ],
                         ),
                       ),
