@@ -108,7 +108,7 @@ export const getUserTeritory = async (req: IRequest, res: Response) => {
         if (!user) {
             return res.status(401).json({ message: "Unauthorized" });
         }
-        const territory = await UserLocation.find({ userId: user._id, status: "completed" })
+        const territory = await UserLocation.find({ status: "completed" })
             .populate({
                 path: "userId",
                 select: "-password",
