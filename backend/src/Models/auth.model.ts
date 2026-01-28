@@ -8,6 +8,7 @@ export interface IUser extends mongoose.Document{
     };
     email : string;
     password : string;
+    rewardPoints?: number;
     socketId ?: string | null;
     createdAt ?: Date;
     updatedAt ?: Date;
@@ -27,6 +28,11 @@ const userSchema : mongoose.Schema = new mongoose.Schema<IUser>({
         type : String,
         required : true,
         minlength : [6,"Password must be at least 6 characters"]
+    },
+    rewardPoints: {
+        type: Number,
+        default: 0,
+        min: 0,
     },
     socketId : {
         type : String,
