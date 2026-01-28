@@ -10,6 +10,7 @@ import '../../screens/profile/user_profile.dart';
 import '../../models/popular_route.dart';
 import '../routes/all_routes_page.dart';
 import '../routes/route_detail_page.dart';
+import '../rewards/rewards_page.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
@@ -66,32 +67,42 @@ class HomePage extends ConsumerWidget {
                       BlendMode.srcIn,
                     ),
                   ),
-                  // Streak badge - number on left, flame icon in circle
-                  Row(
-                    children: [
-                      Text(
-                        '4',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: _fireOrange,
+                  // Streak badge - tappable to open rewards page
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const RewardsPage(),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: _fireOrange.withOpacity(0.12),
-                          shape: BoxShape.circle,
+                      );
+                    },
+                    child: Row(
+                      children: [
+                        Text(
+                          '4',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: _fireOrange,
+                          ),
                         ),
-                        child: Icon(
-                          Icons.local_fire_department_rounded,
-                          size: 24,
-                          color: _fireOrange,
+                        const SizedBox(width: 8),
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: _fireOrange.withOpacity(0.12),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.local_fire_department_rounded,
+                            size: 24,
+                            color: _fireOrange,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ],
               ),
