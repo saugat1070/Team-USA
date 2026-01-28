@@ -32,7 +32,20 @@ export const isPolygonClosedWithinMeters = (
   return dKm * 1000 <= maxDistanceM;
 };
 
+export const calculateTotalDistanceMeters = (coords: Coordinate[]): number => {
+  if (!Array.isArray(coords) || coords.length < 2) return 0;
+  let totalM = 0;
+  for (let i = 1; i < coords.length; i += 1) {
+    const prev = coords[i - 1]!;
+    const curr = coords[i]!;
+    const dKm = distance(point(prev), point(curr), { units: "kilometers" });
+    totalM += dKm * 1000;
+  }
+  return totalM;
+};
+
 export default {
   calculatePolygonAreaMeters2,
   isPolygonClosedWithinMeters,
+  calculateTotalDistanceMeters,
 };

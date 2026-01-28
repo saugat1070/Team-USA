@@ -3,6 +3,7 @@ import Room from "../Models/room.model.js";
 import RoomService from "../Service/room.service.js";
 import redisClient from "../utils/redis.js";
 import UserLocation from "../Models/userLocation.model.js";
+import { calculatePolygonAreaMeters2, calculateTotalDistanceMeters, isPolygonClosedWithinMeters } from "../Service/geometry.service.js";
 
 interface CustomSocket extends Socket {
   userId?: string;
@@ -10,6 +11,8 @@ interface CustomSocket extends Socket {
   _id?: string;
   user?: any;
 }
+
+const THRESHOLD_METERS = 30;
 
 const KEY = (roomId: string, userId: string) =>
   `walk:locations:${roomId}:${userId}`;
@@ -20,11 +23,11 @@ const setupSocketHandlers = (io: Server) => {
     console.log(`User: ${socket.user?.fullName?.firstName} connected with ID: ${socket._id}`);
 
     // User joins a room
-    socket.on("join-room", async () => {
+    socket.on("join-room", async (data: { roomId?: string }) => {
       try {
         console.log("join-room event received");
         const userId = socket._id || socket.user?._id?.toString();
-        const roomId = socket.user?.roomId?.toString();
+        const roomId = data?.roomId;
         if (!userId || !roomId) {
           socket.emit("error", { message: "User or room not set" });
           return;
@@ -37,7 +40,6 @@ const setupSocketHandlers = (io: Server) => {
           socket.emit("joined-room", { roomId });
           return;
         }
-
         // Join the socket to the room
         socket.join(roomId);
 
@@ -95,7 +97,8 @@ const setupSocketHandlers = (io: Server) => {
           });
         } catch (error) {
           console.error("Error in location-update:", error);
-          socket.emit("error", { message: "Failed to update location" });
+          const message = error instanceof Error ? error.message : "Failed to update location";
+          socket.emit("error", { message });
         }
       },
     );
@@ -130,6 +133,7 @@ const setupSocketHandlers = (io: Server) => {
       "walk:end",
       async (data: { activityType?: "walking" | "running" }) => {
       try {
+        console.log("walk:end event received");
         if (!socket.userId || !socket.roomId) {
           socket.emit("walk:result", { ok: false, message: "User or room not set" });
           return;
@@ -148,12 +152,20 @@ const setupSocketHandlers = (io: Server) => {
           return;
         }
 
-        const coordinates = rawPoints.map((p) => [p.lng, p.lat]);
+        const coordinates: [number, number][] = rawPoints.map(
+          (p): [number, number] => [p.lng, p.lat],
+        );
         const startedAt = new Date(rawPoints[0].ts);
         const endedAt = new Date(rawPoints[rawPoints.length - 1].ts);
         const durationSec = Math.max(0, Math.floor((endedAt.getTime() - startedAt.getTime()) / 1000));
 
         const status = rawPoints.length < 2 ? "invalid" : "completed";
+
+        const isClosed = isPolygonClosedWithinMeters(coordinates, 30);
+        const polygonCoords = isClosed ? [coordinates] : [];
+        const areaM2 = isClosed && polygonCoords.length > 4 ? calculatePolygonAreaMeters2(polygonCoords) : 0;
+        const distanceM = calculateTotalDistanceMeters(coordinates);
+        const avgSpeedMps = durationSec > 0 ? distanceM / durationSec : 0;
 
         const locationDoc = await UserLocation.create({
           userId: socket.userId,
@@ -163,6 +175,15 @@ const setupSocketHandlers = (io: Server) => {
           endedAt,
           durationSec,
           track: { type: "LineString", coordinates },
+          polygon: isClosed && coordinates.length > 4 ? { type: "Polygon", coordinates: polygonCoords } : { type: "Polygon", coordinates: [[]] },
+          areaM2,
+          metrics: {
+            distanceM : distanceM >= 10 ? distanceM : 0,
+            avgSpeedMps,
+            maxSpeedMps: 0,
+            totalAscentM: 0,
+            totalDescentM: 0,
+          },
           rawMeta: {
             pointsCount: rawPoints.length,
             avgAccuracyM: 0,

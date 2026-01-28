@@ -1,8 +1,10 @@
 import express from "express";
 import connectDb from "./Config/dbConnect.js";
 import cors from "cors";
-import userRoutes from "./Routes/auth.route.js";
 import logger from "./utils/logger.js";
+import userRoutes from "./Routes/auth.routes.js";
+import mapRoutes from "./Routes/map.routes.js";
+import { leaderRoute } from "./Routes/userWalk.routes.js";
 
 export const app = express();
 app.use(express.json());
@@ -13,6 +15,8 @@ app.use(cors({
 }));
 
 app.use("/api/v1",userRoutes);
+app.use("/api/v1",mapRoutes);
+app.use("/api/v1",leaderRoute);
 
 
 connectDb(); // Database Connection
