@@ -10,8 +10,7 @@ import '../../models/run.dart';
 import '../../providers/location_provider.dart';
 import '../../repositories/run_repository.dart';
 import '../../providers/socket_provider.dart';
-
-import '../../services/socket_service.dart';
+import '../../widgets/app_header.dart';
 
 class MapForRunningPage extends ConsumerStatefulWidget {
   const MapForRunningPage({super.key});
@@ -23,12 +22,18 @@ class MapForRunningPage extends ConsumerStatefulWidget {
 class _MapForRunningPageState extends ConsumerState<MapForRunningPage> {
   GoogleMapController? _mapController;
 
+  // Theme colors
+  static const Color _bgColor = Color(0xFFF5F5F5);
+  static const Color _primaryGreen = Color(0xFF00A86B);
+  static const Color _fireOrange = Color(0xFFFF7043);
+
   final List<LatLng> _routePoints = [];
   final Set<Polyline> _polylines = {};
   final Set<Marker> _markers = {};
   final List<Run> _savedRuns = [];
 
   /// Initial position of the user (locked once set)
+  // ignore: unused_field - kept for potential future use
   LatLng? _initialPosition;
 
   DateTime? _startTime;
@@ -87,130 +92,163 @@ class _MapForRunningPageState extends ConsumerState<MapForRunningPage> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF00A86B),
-        elevation: 0,
-        toolbarHeight: 72,
-        titleSpacing: 16,
-        title: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      backgroundColor: _bgColor,
+      body: SafeArea(
+        child: Column(
           children: [
-            Text(
-              'Paaila',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-            SizedBox(height: 4),
-            Text(
-              'Claim your territory, one step at a time',
-              style: TextStyle(fontSize: 12, color: Colors.white70),
-            ),
-          ],
-        ),
-      ),
-      body: Column(
-        children: [
-          /// 🗺 Google Map - renders immediately with fallback position
-          Expanded(
-            child: Container(
-              margin: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey.shade300),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Stack(
-                  children: [
-                    GoogleMap(
-                      initialCameraPosition: CameraPosition(
-                        target:
-                            mapCenter, // Uses fallback if position not available
-                        zoom: 17,
-                      ),
-                      markers: _markers,
-                      myLocationEnabled: true,
-                      zoomControlsEnabled: false,
-                      webCameraControlEnabled: false,
-                      myLocationButtonEnabled: false,
-                      polylines: _polylines,
-                      onMapCreated: (controller) {
-                        _mapController = controller;
-                        // Animate to actual position once available
-                        if (locationState.position != null) {
-                          controller.animateCamera(
-                            CameraUpdate.newLatLng(
-                              LatLng(
-                                locationState.position!.latitude,
-                                locationState.position!.longitude,
-                              ),
-                            ),
-                          );
-                        }
-                      },
-                    ),
-                    // Recenter button at bottom right
-                    Positioned(
-                      bottom: 16,
-                      right: 16,
-                      child: FloatingActionButton.small(
-                        heroTag: 'recenter_btn',
-                        backgroundColor: Colors.white,
-                        onPressed: _recenterMap,
-                        child: const Icon(
-                          Icons.my_location,
-                          color: Color(0xFF00A86B),
-                        ),
-                      ),
+            const AppHeader(),
+
+            /// 🗺 Google Map - renders immediately with fallback position
+            Expanded(
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.grey.shade200),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
                     ),
                   ],
                 ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Stack(
+                    children: [
+                      GoogleMap(
+                        initialCameraPosition: CameraPosition(
+                          target: mapCenter,
+                          zoom: 17,
+                        ),
+                        markers: _markers,
+                        myLocationEnabled: true,
+                        zoomControlsEnabled: false,
+                        webCameraControlEnabled: false,
+                        myLocationButtonEnabled: false,
+                        polylines: _polylines,
+                        onMapCreated: (controller) {
+                          _mapController = controller;
+                          if (locationState.position != null) {
+                            controller.animateCamera(
+                              CameraUpdate.newLatLng(
+                                LatLng(
+                                  locationState.position!.latitude,
+                                  locationState.position!.longitude,
+                                ),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                      // Recenter button at bottom right
+                      Positioned(
+                        bottom: 16,
+                        right: 16,
+                        child: FloatingActionButton.small(
+                          heroTag: 'recenter_btn',
+                          backgroundColor: Colors.white,
+                          onPressed: _recenterMap,
+                          child: const Icon(
+                            Icons.my_location,
+                            color: Color(0xFF00A86B),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
-          ),
 
-          /// ▶️ Controls
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: _isTracking ? null : _startRun,
-                    child: const Text('Start'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: _isTracking ? _stopRun : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.redAccent,
+            /// ▶️ Controls
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _isTracking ? null : _startRun,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _primaryGreen,
+                        disabledBackgroundColor: Colors.grey.shade300,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 2,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.play_arrow_rounded,
+                            color: _isTracking ? Colors.grey : Colors.white,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Start',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: _isTracking ? Colors.grey : Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    child: const Text('Stop'),
                   ),
-                ),
-              ],
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _isTracking ? _stopRun : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _fireOrange,
+                        disabledBackgroundColor: Colors.grey.shade300,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 2,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.stop_rounded,
+                            color: _isTracking ? Colors.white : Colors.grey,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Stop',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: _isTracking ? Colors.white : Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
 
-          /// 📊 Stats Panel
-          locationStream.when(
-            data: (position) {
-              if (_isTracking) {
-                _handleNewPosition(position);
-              }
-
-              return _buildStats();
-            },
-            loading: () => _buildStats(),
-            error: (e, _) => Text('Error: $e'),
-          ),
-        ],
+            /// 📊 Stats Panel
+            locationStream.when(
+              data: (position) {
+                if (_isTracking) {
+                  _handleNewPosition(position);
+                }
+                return _buildStats();
+              },
+              loading: () => _buildStats(),
+              error: (e, _) => Text('Error: $e'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -293,7 +331,7 @@ class _MapForRunningPageState extends ConsumerState<MapForRunningPage> {
       Polyline(
         polylineId: const PolylineId('current_route'),
         points: List.unmodifiable(_routePoints),
-        color: Colors.blue,
+        color: _primaryGreen,
         width: 5,
       ),
     );
@@ -328,36 +366,64 @@ class _MapForRunningPageState extends ConsumerState<MapForRunningPage> {
       _lastRunPace = pace;
     }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _statItem('Distance', '${distanceKm.toStringAsFixed(2)} km'),
+          _statItem(
+            'Distance',
+            '${distanceKm.toStringAsFixed(2)} km',
+            Icons.straighten_rounded,
+          ),
           _statItem(
             'Time',
             '${duration.inMinutes}:${(duration.inSeconds % 60).toString().padLeft(2, '0')}',
+            Icons.timer_outlined,
           ),
           _statItem(
             'Pace',
             (pace == 0.0 && !_isTracking && _lastRunPace > 0)
-                ? '${_lastRunPace.toStringAsFixed(2)} km/min'
-                : (pace == 0.0 ? '-' : '${pace.toStringAsFixed(2)} km/min'),
+                ? '${_lastRunPace.toStringAsFixed(2)}'
+                : (pace == 0.0 ? '-' : '${pace.toStringAsFixed(2)}'),
+            Icons.speed_rounded,
           ),
         ],
       ),
     );
   }
 
-  Widget _statItem(String label, String value) {
+  Widget _statItem(String label, String value, IconData icon) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        Icon(icon, color: _primaryGreen, size: 22),
+        const SizedBox(height: 6),
         Text(
           value,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF1F2937),
+          ),
         ),
-        Text(label, style: const TextStyle(color: Colors.grey)),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+        ),
       ],
     );
   }
@@ -369,64 +435,82 @@ class _MapForRunningPageState extends ConsumerState<MapForRunningPage> {
       barrierDismissible: false, // User must choose
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Choose Activity'),
-          content: const Text('Are you planning to walk or cycle?'),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          actions: [
-            Expanded(
-              child: ElevatedButton(
-                onPressed: () => Navigator.of(context).pop('Walking'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF00A86B),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.directions_walk, size: 20, color: Colors.white),
-                    SizedBox(width: 8),
-                    Text(
-                      'Walk',
-                      style: TextStyle(fontSize: 16, color: Colors.white),
-                    ),
-                  ],
-                ),
-              ),
+          backgroundColor: Colors.white,
+          title: const Text(
+            'Choose Activity',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1F2937),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: ElevatedButton(
-                onPressed: () => Navigator.of(context).pop('Running'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF00A86B),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.directions_bike, size: 20, color: Colors.white),
-                    SizedBox(width: 8),
-                    Text(
-                      'Cycle',
-                      style: TextStyle(fontSize: 16, color: Colors.white),
+          ),
+          content: const Text(
+            'What activity are you starting?',
+            style: TextStyle(color: Color(0xFF6B7280)),
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          actionsAlignment: MainAxisAlignment.center,
+          actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+          actions: [
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop('Walking'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _primaryGreen,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
-                  ],
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.directions_walk,
+                          size: 20,
+                          color: Colors.white,
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          'Walk',
+                          style: TextStyle(fontSize: 15, color: Colors.white),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop('Running'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _fireOrange,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.directions_bike,
+                          size: 20,
+                          color: Colors.white,
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          'Cycle',
+                          style: TextStyle(fontSize: 15, color: Colors.white),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         );
@@ -539,7 +623,7 @@ class _MapForRunningPageState extends ConsumerState<MapForRunningPage> {
         Polyline(
           polylineId: id,
           points: run.path,
-          color: Colors.green.withOpacity(0.7),
+          color: _primaryGreen.withOpacity(0.7),
           width: 4,
           consumeTapEvents: true,
           onTap: () => _showRunDetails(run),
@@ -575,14 +659,17 @@ class _MapForRunningPageState extends ConsumerState<MapForRunningPage> {
                   _statItem(
                     'Distance',
                     '${run.distanceKm.toStringAsFixed(2)} km',
+                    Icons.straighten_rounded,
                   ),
                   _statItem(
                     'Duration',
                     '${duration.inMinutes}:${(duration.inSeconds % 60).toString().padLeft(2, '0')}',
+                    Icons.timer_outlined,
                   ),
                   _statItem(
                     'Pace',
-                    pace == null ? '-' : '${pace.toStringAsFixed(2)} km/min',
+                    pace == null ? '-' : '${pace.toStringAsFixed(2)}',
+                    Icons.speed_rounded,
                   ),
                 ],
               ),
