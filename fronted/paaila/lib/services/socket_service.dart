@@ -64,6 +64,10 @@ class SocketService {
     socket.emit("walk:stop");
   }
 
+  void joinRoom(String roomId) {
+    socket.emit("join-room", {"roomId": roomId});
+  }
+
   void disconnect() {
     socket.disconnect();
     _connected = false;

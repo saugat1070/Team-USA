@@ -11,7 +11,6 @@ import '../../providers/location_provider.dart';
 import '../../repositories/run_repository.dart';
 import '../../providers/socket_provider.dart';
 
-
 class MapForRunningPage extends ConsumerStatefulWidget {
   const MapForRunningPage({super.key});
 
