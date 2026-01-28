@@ -4,6 +4,7 @@ import 'package:paaila/pages/activity_page.dart';
 import 'package:paaila/pages/profile_page.dart';
 import 'package:paaila/pages/ranking_page.dart';
 import 'package:paaila/screens/map/map_page.dart';
+import 'package:paaila/screens/map/trail_map_page.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/bottom_nav_provider.dart';
 import '../../widgets/bottom_nav_bar.dart';
@@ -18,7 +19,8 @@ class HomePage extends ConsumerWidget {
 
     final List<Widget> _pages = [
       _buildHomePage(context, ref),
-      MapPage(),
+      TrailMapPage(),
+      //MapPage(),
       ActivityPage(),
       RankingPage(),
       UserProfilePage(),

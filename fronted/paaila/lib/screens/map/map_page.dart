@@ -26,10 +26,11 @@ class _MapPageState extends ConsumerState<MapPage> {
 
   Future<void> _loadDistricts() async {
     try {
-      final String jsonString =
-          await rootBundle.loadString('assets/data/district.json');
+      final String jsonString = await rootBundle.loadString(
+        'assets/data/district.json',
+      );
       final Map<String, dynamic> jsonResponse = json.decode(jsonString);
-      final List<dynamic> features = jsonResponse['features']?? [];
+      final List<dynamic> features = jsonResponse['features'] ?? [];
 
       final Set<Polygon> newPolygons = {};
 
@@ -43,13 +44,16 @@ class _MapPageState extends ConsumerState<MapPage> {
           final List<LatLng> points = coordinates.map((coord) {
             // GeoJSON order is [longitude, latitude]
             return LatLng(
-                (coord[1] as num).toDouble(), (coord[0] as num).toDouble());
+              (coord[1] as num).toDouble(),
+              (coord[0] as num).toDouble(),
+            );
           }).toList();
 
           newPolygons.add(
             Polygon(
-              polygonId:
-                  PolygonId(feature['properties']['shapeName'] ?? 'unknown'),
+              polygonId: PolygonId(
+                feature['properties']['shapeName'] ?? 'unknown',
+              ),
               points: points,
               strokeWidth: 2,
               strokeColor: const Color(0xFF00A86B),
@@ -65,12 +69,77 @@ class _MapPageState extends ConsumerState<MapPage> {
     } catch (e) {
       debugPrint('Error loading districts: $e');
     }
+
+    // Load trails
+    await _loadTrails();
+  }
+
+  Future<void> _loadTrails() async {
+    try {
+      final String jsonString = await rootBundle.loadString(
+        'assets/data/trails.json',
+      );
+      final Map<String, dynamic> jsonResponse = json.decode(jsonString);
+      final List<dynamic> features = jsonResponse['features'] ?? [];
+
+      final Set<Polygon> trailPolygons = {};
+      final List<Color> colors = [
+        const Color.fromARGB(200, 156, 39, 176), // Purple
+        const Color.fromARGB(200, 255, 193, 7), // Yellow
+        const Color.fromARGB(200, 76, 175, 80), // Green
+        const Color.fromARGB(200, 33, 150, 243), // Blue
+        const Color.fromARGB(200, 255, 87, 34), // Orange
+        const Color.fromARGB(200, 0, 137, 249), // Light Blue
+      ];
+
+      for (int i = 0; i < features.length; i++) {
+        var feature = features[i];
+        if (feature['geometry']['type'] == 'Polygon') {
+          final List<dynamic> coordinates =
+              feature['geometry']['coordinates'][0];
+          final List<LatLng> points = coordinates.map((coord) {
+            return LatLng(
+              (coord[1] as num).toDouble(),
+              (coord[0] as num).toDouble(),
+            );
+          }).toList();
+
+          final color = colors[i % colors.length];
+
+          trailPolygons.add(
+            Polygon(
+              polygonId: PolygonId(
+                feature['properties']['shapeName'] ?? 'unknown_trail',
+              ),
+              points: points,
+              strokeWidth: 3,
+              strokeColor: color,
+              fillColor: color.withOpacity(0.4),
+              onTap: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      '${feature['properties']['shapeName']} • ${feature['properties']['activityType']}',
+                    ),
+                  ),
+                );
+              },
+            ),
+          );
+        }
+      }
+
+      setState(() {
+        _polygons.addAll(trailPolygons);
+      });
+    } catch (e) {
+      debugPrint('Error loading trails: $e');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final locationState = ref.watch(locationProvider);
-    
 
     // Determine map center: use current location if available, otherwise fallback.
     final LatLng center = (locationState.position != null)
@@ -101,10 +170,7 @@ class _MapPageState extends ConsumerState<MapPage> {
             SizedBox(height: 4),
             Text(
               'Claim your territory, one step at a time',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.white70,
-              ),
+              style: TextStyle(fontSize: 12, color: Colors.white70),
             ),
           ],
         ),
@@ -113,10 +179,7 @@ class _MapPageState extends ConsumerState<MapPage> {
         children: [
           // Google Map as background
           Positioned.fill(
-            child: _BackgroundMap(
-              center: center,
-              polygons: _polygons,
-            ),
+            child: _BackgroundMap(center: center, polygons: _polygons),
           ),
 
           // Light gradient overlay to keep soft look
@@ -156,10 +219,7 @@ class _MapPageState extends ConsumerState<MapPage> {
         onPressed: () {
           // Intentionally left empty – visual only.
         },
-        child: const Icon(
-          Icons.navigation_rounded,
-          color: Color(0xFF00A86B),
-        ),
+        child: const Icon(Icons.navigation_rounded, color: Color(0xFF00A86B)),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
@@ -207,18 +267,12 @@ class _TerritoryCard extends StatelessWidget {
                 children: [
                   Text(
                     'Your Territory',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(height: 2),
                   Text(
                     'Kathmandu Valley',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey,
-                    ),
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
                   ),
                 ],
               ),
@@ -228,10 +282,7 @@ class _TerritoryCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: _TerritoryStat(
-                  label: 'Claimed Routes',
-                  value: '2',
-                ),
+                child: _TerritoryStat(label: 'Claimed Routes', value: '2'),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -271,13 +322,7 @@ class _TerritoryStat extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 11,
-              color: Colors.grey,
-            ),
-          ),
+          Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)),
           const SizedBox(height: 4),
           Text(
             value,
@@ -358,10 +403,7 @@ class _TerritoryShapes extends StatelessWidget {
 }
 
 class _BackgroundMap extends StatelessWidget {
-  const _BackgroundMap({
-    required this.center,
-    required this.polygons,
-  });
+  const _BackgroundMap({required this.center, required this.polygons});
 
   final LatLng center;
   final Set<Polygon> polygons;
@@ -369,10 +411,7 @@ class _BackgroundMap extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GoogleMap(
-      initialCameraPosition: CameraPosition(
-        target: center,
-        zoom: 13,
-      ),
+      initialCameraPosition: CameraPosition(target: center, zoom: 13),
       myLocationEnabled: true,
       myLocationButtonEnabled: false,
       zoomControlsEnabled: false,
