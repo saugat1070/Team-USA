@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:paaila/core/constants/app_colors.dart';
+import '../../providers/auth_provider.dart';
 
-class AnimatedSplashScreen extends StatefulWidget {
+class AnimatedSplashScreen extends ConsumerStatefulWidget {
   const AnimatedSplashScreen({super.key});
 
   @override
-  State<AnimatedSplashScreen> createState() => _AnimatedSplashScreenState();
+  ConsumerState<AnimatedSplashScreen> createState() =>
+      _AnimatedSplashScreenState();
 }
 
-class _AnimatedSplashScreenState extends State<AnimatedSplashScreen>
+class _AnimatedSplashScreenState extends ConsumerState<AnimatedSplashScreen>
     with TickerProviderStateMixin {
   late AnimationController _footstepController;
   late AnimationController _logoController;
@@ -142,12 +145,22 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen>
     // Step 4: Simultaneously transition background to white and swap logo to colored
     await _backgroundController.forward();
 
-    // Step 4: Wait before navigating
+    // Step 5: Wait before checking auth and navigating
     await Future.delayed(const Duration(milliseconds: 1000));
 
-    // Navigate to onboarding
+    // Check if user is already authenticated (has valid JWT)
     if (mounted) {
-      Navigator.of(context).pushReplacementNamed('/onboarding');
+      final isAuthenticated = await ref
+          .read(authProvider.notifier)
+          .checkAuthStatus();
+
+      if (isAuthenticated) {
+        // User has valid JWT and socket is now connected, go to home
+        Navigator.of(context).pushReplacementNamed('/home');
+      } else {
+        // No valid auth, show onboarding/login
+        Navigator.of(context).pushReplacementNamed('/onboarding');
+      }
     }
   }
 

@@ -11,6 +11,8 @@ import '../../providers/location_provider.dart';
 import '../../repositories/run_repository.dart';
 import '../../providers/socket_provider.dart';
 
+import '../../services/socket_service.dart';
+
 class MapForRunningPage extends ConsumerStatefulWidget {
   const MapForRunningPage({super.key});
 
@@ -36,7 +38,8 @@ class _MapForRunningPageState extends ConsumerState<MapForRunningPage> {
   bool _isTracking = false;
   Duration _lastRunDuration = Duration.zero;
   double _lastRunDistance = 0.0;
-  double _lastRunPace = 0.0; // min/km
+  double _lastRunPace = 0.0; // km/min
+  String? _redisActivity; // Store the activity type (Walking or Running)
 
   @override
   void initState() {
@@ -49,10 +52,39 @@ class _MapForRunningPageState extends ConsumerState<MapForRunningPage> {
     });
   }
 
+  /// Track if we've already centered on user's location
+  bool _hasCenteredOnUser = false;
+
+  /// Fallback center if location is not yet available (Kathmandu)
+  static const LatLng _kDefaultCenter = LatLng(27.7172, 85.3240);
+
   @override
   Widget build(BuildContext context) {
     final locationState = ref.watch(locationProvider);
     final locationStream = ref.watch(locationUpdatesProvider);
+
+    // Use position if available, otherwise fallback to default
+    final LatLng mapCenter = (locationState.position != null)
+        ? LatLng(
+            locationState.position!.latitude,
+            locationState.position!.longitude,
+          )
+        : _kDefaultCenter;
+
+    // Auto-center on user when position becomes available
+    if (locationState.position != null &&
+        !_hasCenteredOnUser &&
+        _mapController != null) {
+      _hasCenteredOnUser = true;
+      _mapController!.animateCamera(
+        CameraUpdate.newLatLng(
+          LatLng(
+            locationState.position!.latitude,
+            locationState.position!.longitude,
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -79,86 +111,123 @@ class _MapForRunningPageState extends ConsumerState<MapForRunningPage> {
           ],
         ),
       ),
-      body: locationState.isTracking
-          ? const Center(child: CircularProgressIndicator())
-          : locationState.position == null
-          ? const Center(child: Text('Location not available'))
-          : Column(
+      body: Column(
+        children: [
+          /// 🗺 Google Map - renders immediately with fallback position
+          Expanded(
+            child: Container(
+              margin: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Stack(
+                  children: [
+                    GoogleMap(
+                      initialCameraPosition: CameraPosition(
+                        target:
+                            mapCenter, // Uses fallback if position not available
+                        zoom: 17,
+                      ),
+                      markers: _markers,
+                      myLocationEnabled: true,
+                      zoomControlsEnabled: false,
+                      webCameraControlEnabled: false,
+                      myLocationButtonEnabled: false,
+                      polylines: _polylines,
+                      onMapCreated: (controller) {
+                        _mapController = controller;
+                        // Animate to actual position once available
+                        if (locationState.position != null) {
+                          controller.animateCamera(
+                            CameraUpdate.newLatLng(
+                              LatLng(
+                                locationState.position!.latitude,
+                                locationState.position!.longitude,
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                    // Recenter button at bottom right
+                    Positioned(
+                      bottom: 16,
+                      right: 16,
+                      child: FloatingActionButton.small(
+                        heroTag: 'recenter_btn',
+                        backgroundColor: Colors.white,
+                        onPressed: _recenterMap,
+                        child: const Icon(
+                          Icons.my_location,
+                          color: Color(0xFF00A86B),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          /// ▶️ Controls
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                /// 🗺 Google Map
                 Expanded(
-                  child: Container(
-                    margin: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.grey.shade300),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: GoogleMap(
-                        initialCameraPosition: CameraPosition(
-                          target: LatLng(
-                            locationState.position!.latitude,
-                            locationState.position!.longitude,
-                          ),
-                          zoom: 17,
-                        ),
-                        markers: _markers,
-                        myLocationEnabled: true,
-                        myLocationButtonEnabled: true,
-                        polylines: _polylines,
-                        onMapCreated: (controller) {
-                          _mapController = controller;
-                        },
-                      ),
-                    ),
+                  child: ElevatedButton(
+                    onPressed: _isTracking ? null : _startRun,
+                    child: const Text('Start'),
                   ),
                 ),
-
-                /// ▶️ Controls
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: _isTracking ? _stopRun : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.redAccent,
+                    ),
+                    child: const Text('Stop'),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: _isTracking ? null : _startRun,
-                          child: const Text('Start'),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: _isTracking ? _stopRun : null,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.redAccent,
-                          ),
-                          child: const Text('Stop'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                /// 📊 Stats Panel
-                locationStream.when(
-                  data: (position) {
-                    if (_isTracking) {
-                      _handleNewPosition(position);
-                    }
-
-                    return _buildStats();
-                  },
-                  loading: () => _buildStats(),
-                  error: (e, _) => Text('Error: $e'),
                 ),
               ],
             ),
+          ),
+
+          /// 📊 Stats Panel
+          locationStream.when(
+            data: (position) {
+              if (_isTracking) {
+                _handleNewPosition(position);
+              }
+
+              return _buildStats();
+            },
+            loading: () => _buildStats(),
+            error: (e, _) => Text('Error: $e'),
+          ),
+        ],
+      ),
     );
+  }
+
+  /// Recenter map to current location
+  void _recenterMap() {
+    final locationState = ref.read(locationProvider);
+    if (locationState.position != null && _mapController != null) {
+      _mapController!.animateCamera(
+        CameraUpdate.newLatLng(
+          LatLng(
+            locationState.position!.latitude,
+            locationState.position!.longitude,
+          ),
+        ),
+      );
+    }
   }
 
   /// Handle live location updates
@@ -251,7 +320,7 @@ class _MapForRunningPageState extends ConsumerState<MapForRunningPage> {
     final pace = () {
       if (distanceKm <= 0 || duration.inSeconds == 0) return 0.0;
       final minutes = duration.inSeconds / 60.0;
-      return minutes / distanceKm; // min/km
+      return distanceKm / minutes; // km/min
     }();
 
     if (!isRunning) {
@@ -272,8 +341,8 @@ class _MapForRunningPageState extends ConsumerState<MapForRunningPage> {
           _statItem(
             'Pace',
             (pace == 0.0 && !_isTracking && _lastRunPace > 0)
-                ? '${_lastRunPace.toStringAsFixed(2)} min/km'
-                : (pace == 0.0 ? '-' : '${pace.toStringAsFixed(2)} min/km'),
+                ? '${_lastRunPace.toStringAsFixed(2)} km/min'
+                : (pace == 0.0 ? '-' : '${pace.toStringAsFixed(2)} km/min'),
           ),
         ],
       ),
@@ -293,8 +362,82 @@ class _MapForRunningPageState extends ConsumerState<MapForRunningPage> {
     );
   }
 
-  void _startRun() {
+  void _startRun() async {
+    // Show dialog to choose activity type
+    final activityType = await showDialog<String>(
+      context: context,
+      barrierDismissible: false, // User must choose
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Choose Activity'),
+          content: const Text('Are you planning to walk or cycle?'),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          actions: [
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () => Navigator.of(context).pop('Walking'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF00A86B),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.directions_walk, size: 20, color: Colors.white),
+                    SizedBox(width: 8),
+                    Text(
+                      'Walk',
+                      style: TextStyle(fontSize: 16, color: Colors.white),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () => Navigator.of(context).pop('Running'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF00A86B),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.directions_bike, size: 20, color: Colors.white),
+                    SizedBox(width: 8),
+                    Text(
+                      'Cycle',
+                      style: TextStyle(fontSize: 16, color: Colors.white),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    // If user dismissed dialog or didn't choose, don't start
+    if (activityType == null) return;
+
     setState(() {
+      _redisActivity = activityType; // Store the choice
       _isTracking = true;
       _routePoints.clear();
       _polylines.clear();
@@ -328,7 +471,7 @@ class _MapForRunningPageState extends ConsumerState<MapForRunningPage> {
       final distanceKm = _lastRunDistance / 1000.0;
       if (distanceKm > 0 && _lastRunDuration.inSeconds > 0) {
         final minutes = _lastRunDuration.inSeconds / 60.0;
-        _lastRunPace = minutes / distanceKm;
+        _lastRunPace = distanceKm / minutes;
       } else {
         _lastRunPace = 0.0;
       }
@@ -355,7 +498,21 @@ class _MapForRunningPageState extends ConsumerState<MapForRunningPage> {
         _savedRuns.add(run);
       });
       _rebuildSavedRunPolylines();
+
+      // Push activity to Redis with the chosen activity type
+      if (_redisActivity != null) {
+        _pushRedis(_redisActivity!);
+      }
+
+      // Navigate back to home page after stopping
+      if (mounted) {
+        Navigator.of(context).pushReplacementNamed('/home');
+      }
     }
+  }
+
+  void _pushRedis(String activityType) {
+    ref.read(socketServiceProvider).pushRedis(activityType);
   }
 
   Future<void> _loadSavedRuns() async {
@@ -425,7 +582,7 @@ class _MapForRunningPageState extends ConsumerState<MapForRunningPage> {
                   ),
                   _statItem(
                     'Pace',
-                    pace == null ? '-' : '${pace.toStringAsFixed(2)} min/km',
+                    pace == null ? '-' : '${pace.toStringAsFixed(2)} km/min',
                   ),
                 ],
               ),
