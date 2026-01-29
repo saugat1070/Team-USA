@@ -7,7 +7,7 @@ import '../models/auth_response_models.dart';
 
 class AuthService {
   static const String baseUrl =
-      'http://192.168.1.72:3000/api/v1'; // Update with your API URL
+      'https://team-usa-2.onrender.com/api/v1'; // Update with your API URL
   static String? _authToken;
   static const String _tokenKey = 'jwt_token';
 

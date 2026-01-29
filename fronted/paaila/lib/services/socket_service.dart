@@ -13,7 +13,7 @@ class SocketService {
     if (_connected) return;
 
     socket = IO.io(
-      'http://192.168.1.72:3000',
+      'https://team-usa-2.onrender.com',
       IO.OptionBuilder()
           .setTransports(['websocket'])
           .disableAutoConnect()

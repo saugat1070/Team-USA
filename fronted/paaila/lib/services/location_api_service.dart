@@ -13,7 +13,7 @@ class LocationApiService {
     final token = AuthService.authToken;
     if (token == null || token.isEmpty) return;
 
-    final url = Uri.parse('http://192.168.1.72:3000/api/v1/get-district');
+    final url = Uri.parse('https://team-usa-2.onrender.com/api/v1/get-district');
     try {
       final response = await http
           .post(

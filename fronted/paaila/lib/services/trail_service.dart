@@ -4,7 +4,7 @@ import 'package:paaila/models/trail_model.dart';
 import 'package:paaila/services/auth_service.dart';
 
 class TrailService {
-  static const String baseUrl = 'http://192.168.1.72:3000';
+  static const String baseUrl = 'https://team-usa-2.onrender.com';
 
   static Future<List<Territory>> loadTrails() async {
     try {

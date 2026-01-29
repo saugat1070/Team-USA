@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'package:paaila/services/auth_service.dart';
 
 class RankingService {
-  static const String baseUrl = 'http://192.168.1.72:3000';
+  static const String baseUrl = 'https://team-usa-2.onrender.com';
 
   static Future<List<Runner>> fetchRankings({
     required String roomId,
