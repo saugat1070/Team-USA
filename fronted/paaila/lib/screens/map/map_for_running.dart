@@ -11,6 +11,7 @@ import '../../providers/location_provider.dart';
 import '../../repositories/run_repository.dart';
 import '../../providers/socket_provider.dart';
 import '../../widgets/app_header.dart';
+import '../../widgets/save_run_dialog.dart';
 
 class MapForRunningPage extends ConsumerStatefulWidget {
   const MapForRunningPage({super.key});
@@ -535,7 +536,7 @@ class _MapForRunningPageState extends ConsumerState<MapForRunningPage> {
     });
   }
 
-  void _stopRun() {
+  void _stopRun() async {
     if (!_isTracking) return;
 
     final DateTime? startedAt = _startTime;
@@ -588,9 +589,18 @@ class _MapForRunningPageState extends ConsumerState<MapForRunningPage> {
         _pushRedis(_redisActivity!);
       }
 
-      // Navigate back to home page after stopping
+      // Show save run dialog
       if (mounted) {
-        Navigator.of(context).pushReplacementNamed('/home');
+        final saved = await SaveRunDialog.show(
+          context: context,
+          run: run,
+          activityType: _redisActivity,
+        );
+
+        // Navigate back to home page after dialog is closed
+        if (mounted) {
+          Navigator.of(context).pushReplacementNamed('/home');
+        }
       }
     }
   }
