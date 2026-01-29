@@ -1,11 +1,10 @@
 <div align="center">
 
-# **Paila**
+![new-col2x](https://github.com/user-attachments/assets/f32f67c1-9a17-42a3-aa18-dd58a49e2eaa)
 
 [![](https://raw.githubusercontent.com/your-org/paila/main/assets/github-banner.png)](https://paila.app)
 
 <br/>
- <img width="334" height="196" alt="Screenshot from 2026-01-29 01-23-14" src="https://github.com/user-attachments/assets/9dd3c4b3-1e8b-4e88-9187-8fdd3794c424" />
 
 
 [![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/) [![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev/) [![Express](https://img.shields.io/badge/Express-373737?style=for-the-badge&logo=express&logoColor=white)](https://expressjs.com/) [![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://www.mongodb.com/) [![Redis](https://img.shields.io/badge/Redis-FF4438?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io/) [![Socket.IO](https://img.shields.io/badge/Socket.IO-010101?style=for-the-badge&logo=socketdotio&logoColor=white)](https://socket.io/)
