@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:paaila/models/user_model.dart';
 import '../../models/reward.dart';
 import 'reward_detail_page.dart';
 
 class RewardsPage extends StatelessWidget {
+
+
   const RewardsPage({super.key});
 
   // Theme colors
@@ -13,6 +16,9 @@ class RewardsPage extends StatelessWidget {
   static const Color _fireOrange = Color(0xFFFF7043);
   static const Color _textDark = Color(0xFF1F2937);
   static const Color _textMuted = Color(0xFF6B7280);
+
+  // TODO: Replace with actual user reward points from provider/state
+  int get rewardPoints => 100;
 
   @override
   Widget build(BuildContext context) {
@@ -145,9 +151,9 @@ class RewardsPage extends StatelessWidget {
                                       ),
                                     ),
                                     const SizedBox(height: 12),
-                                    const Text(
-                                      '1,250',
-                                      style: TextStyle(
+                                    Text(
+                                      '$rewardPoints',
+                                      style: const TextStyle(
                                         fontSize: 32,
                                         fontWeight: FontWeight.w700,
                                         color: _primaryGreen,

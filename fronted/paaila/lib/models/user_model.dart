@@ -3,15 +3,18 @@ class User {
   final String firstName;
   final String? secondName;
   final String email;
+  
   final String? socketId;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final int rewardPoints;
 
   User({
     required this.id,
     required this.firstName,
     this.secondName,
     required this.email,
+    required this.rewardPoints,
     this.socketId,
     required this.createdAt,
     required this.updatedAt,
@@ -31,6 +34,7 @@ class User {
       firstName: firstName,
       secondName: secondName,
       email: json['email'] as String,
+      rewardPoints: json['rewardPoints'] as int,
       socketId: json['socketId'] as String?,
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
@@ -46,6 +50,7 @@ class User {
         if (secondName != null) 'secondName': secondName,
       },
       'email': email,
+      'rewardPoints': rewardPoints,
       'socketId': socketId,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
@@ -61,7 +66,8 @@ class User {
     String? id,
     String? firstName,
     String? secondName,
-    String? email,
+    String? email, 
+    int? rewardPoints,
     String? socketId,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -71,6 +77,7 @@ class User {
       firstName: firstName ?? this.firstName,
       secondName: secondName ?? this.secondName,
       email: email ?? this.email,
+      rewardPoints: rewardPoints ?? this.rewardPoints,
       socketId: socketId ?? this.socketId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

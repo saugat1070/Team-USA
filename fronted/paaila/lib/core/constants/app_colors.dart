@@ -5,7 +5,7 @@ class AppColors {
   // PRIMARY BRAND - Soft, calming green (health & wellness focused)
   // ─────────────────────────────────────────────────────────────────────────
   /// Primary green - used sparingly for key actions and highlights
-  static const Color primary = Color(0xFF2E7D32);
+  static const Color primary = Color.fromARGB(255, 49, 135, 54);
 
   /// Lighter tint for subtle backgrounds and hover states
   static const Color primaryLight = Color(0xFFE8F5E9);
